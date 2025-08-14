@@ -50,7 +50,13 @@ app.set('view engine', 'ejs');
 
 // Routes
 app.get('/', (req, res) => {
-  res.render('index');
+  // In production, serve the static HTML file directly instead of using EJS
+  if (process.env.NODE_ENV === 'production') {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  } else {
+    // In development, use EJS if available
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  }
 });
 
 // File upload endpoint
