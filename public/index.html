@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt Flow Processor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .container {
+            max-width: 800px;
+            margin-top: 2rem;
+        }
+        .upload-section {
+            background-color: #f8f9fa;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        .messages-section {
+            background-color: #fff;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .message-card {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+        .message-image {
+            max-width: 100%;
+            height: auto;
+            margin-top: 1rem;
+        }
+        /* Notification styles */
+        .notification-bell {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1000;
+            background-color: #fff;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .notification-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none;
+        }
+        .notification-header {
+            padding: 10px 15px;
+            border-bottom: 1px solid #dee2e6;
+            font-weight: bold;
+            background-color: #f8f9fa;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+        .notification-list {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+        .notification-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #dee2e6;
+            cursor: pointer;
+        }
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+        .notification-item.unread {
+            background-color: #e9f5ff;
+        }
+        .message-detail-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 2000;
+            overflow-y: auto;
+        }
+        .message-detail-content {
+            background-color: #fff;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 800px;
+            position: relative;
+        }
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+    </style>
+</head>
+<body>
+    <!-- Notification Bell -->
+    <div class="notification-bell" id="notificationBell">
+        <i class="fas fa-bell"></i>
+        <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+    </div>
+
+    <!-- Notification Container -->
+    <div class="notification-container" id="notificationContainer">
+        <div class="notification-header">Notifications</div>
+        <ul class="notification-list" id="notificationList"></ul>
+    </div>
+
+    <!-- Message Detail Modal -->
+    <div class="message-detail-modal" id="messageDetailModal">
+        <div class="message-detail-content">
+            <span class="close-modal" id="closeModal">&times;</span>
+            <div id="messageDetailContent"></div>
+        </div>
+    </div>
+
+    <!-- Toast Container for New Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="container">
+        <h1 class="text-center mb-4">Receipt Flow Processor</h1>
+        
+        <div class="upload-section">
+            <h3>Upload Receipt</h3>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="file" class="form-label">Select File</label>
+                    <input type="file" class="form-control" id="file" name="file" accept="image/*,.pdf" required>
+                </div>
+                <div class="mb-3">
+                    <label for="companyId" class="form-label">Company ID</label>
+                    <input type="text" class="form-control" id="companyId" name="companyId">
+                </div>
+                <div class="mb-3">
+                    <label for="userId" class="form-label">User ID</label>
+                    <input type="text" class="form-control" id="userId" name="userId">
+                </div>
+                <div class="mb-3">
+                    <label for="fileId" class="form-label">File ID</label>
+                    <input type="text" class="form-control" id="fileId" name="fileId">
+                </div>
+                <div class="mb-3">
+                    <label for="authToken" class="form-label">Authorization Token</label>
+                    <input type="text" class="form-control" id="authToken" name="authToken" value="huHMqgrSteTKbaM84B3T4izJsChFpm6R">
+                </div>
+                <div class="mb-3">
+                    <label for="productName" class="form-label">Product Name</label>
+                    <input type="text" class="form-control" id="productName" name="productName" value="milient-test-product">
+                </div>
+                <button type="submit" class="btn btn-primary">Upload</button>
+            </form>
+            <div id="uploadStatus" class="mt-3"></div>
+        </div>
+
+        <div class="messages-section">
+            <h3>SNS Messages</h3>
+            <div id="messagesContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        // Toast notification function
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toastContainer');
+            
+            const toastId = 'toast-' + Date.now();
+            const toast = document.createElement('div');
+            toast.className = `toast show bg-${type === 'success' ? 'success' : 'danger'} text-white`;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            
+            toast.innerHTML = `
+                <div class="toast-header bg-${type === 'success' ? 'success' : 'danger'} text-white">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i>
+                    <strong class="me-auto">Notification</strong>
+                    <small>${new Date().toLocaleTimeString()}</small>
+                    <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    ${message}
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            // Auto dismiss after 5 seconds
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+        
+        // Handle form submission
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                console.log('Upload result:', result);
+                
+                // Show success toast notification
+                showToast(`File "${result.fileName || 'unknown'}" uploaded successfully!`, 'success');
+                
+                // Update status message
+                if(response.ok) {
+                    document.getElementById('uploadStatus').innerHTML = `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>File uploaded successfully!
+                        </div>
+                    `;
+                } else {
+                    throw new Error(result.error || 'Unknown error');
+                }
+                
+            
+            } catch (error) {
+                console.error('Error uploading file:', error);
+                // Show error toast notification
+                showToast('Error uploading file. Please try again.', 'danger');
+                
+                // Update status message
+                document.getElementById('uploadStatus').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>Error uploading file: ${error.message || 'Unknown error'}
+                    </div>
+                `;
+            }
+        });
+
+        // Function to display SNS messages
+        function displayMessage(message) {
+            const messageCard = document.createElement('div');
+            messageCard.className = 'message-card';
+            
+            // Display message
+            // Determine if it's an SNS message or legacy format
+            if (message.type === 'SNS') {
+                // Handle SNS message format
+                const data = message.data || {};
+                const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleString() : 'N/A';
+                
+                let html = `
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-cloud me-2"></i>SNS Notification</h5>
+                            <small>${timestamp}</small>
+                        </div>
+                        <div class="card-body">
+                `;
+                
+                // If message.data is an object with receipt properties
+                if (data.s3Key || data.fileName || data.customerId) {
+                    html += `
+                        <p><strong>S3 Key:</strong> ${data.s3Key || 'N/A'}</p>
+                        <p><strong>S3 Bucket:</strong> ${data.s3Bucket || 'N/A'}</p>
+                        <p><strong>File Name:</strong> ${data.fileName || 'N/A'}</p>
+                        <p><strong>Customer ID:</strong> ${data.customerId || 'N/A'}</p>
+                        <p><strong>User ID:</strong> ${data.userId || 'N/A'}</p>
+                        <p><strong>Product Name:</strong> ${data.productName || 'N/A'}</p>
+                        <p><strong>Receipt Source:</strong> ${data.receiptSource || 'N/A'}</p>
+                        <p><strong>Success:</strong> ${data.success ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-danger">No</span>'}</p>
+                        <p><strong>Message:</strong> ${data.message || 'N/A'}</p>
+                    `;
+                } else {
+                    // Display as JSON for other types of data
+                    html += `<pre class="bg-light p-3 rounded">${JSON.stringify(data, null, 2)}</pre>`;
+                }
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+                
+                // Check for receipt data in the SNS message
+                if (data.receiptData) {
+                    try {
+                        const receiptData = typeof data.receiptData === 'string' 
+                            ? JSON.parse(data.receiptData) 
+                            : data.receiptData;
+                            
+                        if (Array.isArray(receiptData) && receiptData.length > 0) {
+                            html += renderReceiptData(receiptData);
+                        }
+                    } catch (e) {
+                        console.error('Error parsing receipt data:', e);
+                        html += `<p><strong>Receipt Data (raw):</strong> ${data.receiptData}</p>`;
+                    }
+                }
+                
+                // Add image if available
+                if (data.preSignedUrl) {
+                    html += renderReceiptImage(data.preSignedUrl);
+                }
+                
+                messageCard.innerHTML = html;
+            } else {
+                // Legacy message format (for backwards compatibility)
+                let html = `
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Receipt Processed</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>S3 Key:</strong> ${message.s3Key || 'N/A'}</p>
+                            <p><strong>S3 Bucket:</strong> ${message.s3Bucket || 'N/A'}</p>
+                            <p><strong>File Name:</strong> ${message.fileName || 'N/A'}</p>
+                            <p><strong>Customer ID:</strong> ${message.customerId || 'N/A'}</p>
+                            <p><strong>User ID:</strong> ${message.userId || 'N/A'}</p>
+                            <p><strong>Product Name:</strong> ${message.productName || 'N/A'}</p>
+                            <p><strong>Receipt Source:</strong> ${message.receiptSource || 'N/A'}</p>
+                            <p><strong>Success:</strong> ${message.success ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-danger">No</span>'}</p>
+                            <p><strong>Message:</strong> ${message.message || 'N/A'}</p>
+                        </div>
+                    </div>
+                `;
+                
+                messageCard.innerHTML = html;
+            }
+            
+            document.getElementById('messagesContainer').prepend(messageCard);
+        }
+        
+        // Helper function to render receipt data
+        function renderReceiptData(receiptData) {
+            const receipt = receiptData[0]; // Get first receipt
+            return `
+                <div class="card mt-3 mb-3">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Receipt Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Merchant Information</h6>
+                                <p><strong>Name:</strong> ${receipt.merchantName || 'N/A'}</p>
+                                <p><strong>Address:</strong> ${receipt.merchantAddress ? receipt.merchantAddress.replace(/\n/g, '<br>') : 'N/A'}</p>
+                                <p><strong>Phone:</strong> ${receipt.merchantPhoneNumber || 'N/A'}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Transaction Information</h6>
+                                <p><strong>Date:</strong> ${receipt.transactionDate || 'N/A'}</p>
+                                <p><strong>Time:</strong> ${receipt.transactionTime || 'N/A'}</p>
+                                <p><strong>Total:</strong> ${receipt.total || 'N/A'}</p>
+                                <p><strong>Subtotal:</strong> ${receipt.subtotal || 'N/A'}</p>
+                                <p><strong>Tax:</strong> ${receipt.totalTax || 'N/A'}</p>
+                                <p><strong>Tip:</strong> ${receipt.tip || 'N/A'}</p>
+                            </div>
+                        </div>
+                        
+                        <h6 class="mt-3">Items</h6>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Description</th>
+                                        <th>Quantity</th>
+                                        <th>Unit Price</th>
+                                        <th>Total Price</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${receipt.items && receipt.items.map(item => `
+                                        <tr>
+                                            <td>${item.description || 'N/A'}</td>
+                                            <td>${item.quantity || 'N/A'}</td>
+                                            <td>${item.price || 'N/A'}</td>
+                                            <td>${item.totalPrice || 'N/A'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Helper function to render receipt image
+        function renderReceiptImage(preSignedUrl) {
+            return `
+                <div class="card mt-3">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0"><i class="fas fa-image me-2"></i>Receipt Image</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="${preSignedUrl}" alt="Receipt" class="message-image">
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('messagesContainer').prepend(messageCard);
+        }
+
+        // Store for messages we've already seen
+        let seenMessageIds = new Set();
+        let notifications = [];
+        let unreadCount = 0;
+
+        // Poll for messages (both SNS and legacy)
+        async function pollMessages() {
+            try {
+                const response = await fetch('/messages');
+                const messages = await response.json();
+                
+                // Check for new messages
+                messages.forEach(message => {
+                    // Generate a unique ID for the message based on its content
+                    let messageId;
+                    
+                    if (message.type === 'SNS') {
+                        // For SNS messages, use timestamp + hash of data
+                        messageId = 'sns-' + message.timestamp + '-' + 
+                            (message.data ? JSON.stringify(message.data).length : 'unknown');
+                    } else {
+                        // For legacy messages
+                        messageId = message.s3Key || message.fileName || ('msg-' + Date.now());
+                    }
+                    
+                    // If this is a new message we haven't seen before
+                    if (!seenMessageIds.has(messageId)) {
+                        console.log('New message received:', message.type || 'unknown type');
+                        
+                        // Mark as seen
+                        seenMessageIds.add(messageId);
+                        
+                        // Add to notifications
+                        const notification = {
+                            id: messageId,
+                            message: message,
+                            timestamp: message.timestamp ? new Date(message.timestamp) : new Date(),
+                            read: false
+                        };
+                        notifications.unshift(notification); // Add to beginning of array
+                        
+                        // Show notification
+                        showNotification(notification);
+                        
+                        // Update badge count
+                        unreadCount++;
+                        updateNotificationBadge();
+                        
+                        // Display in messages container
+                        displayMessage(message);
+                    }
+                });
+                
+                // Update notification list
+                updateNotificationList();
+            } catch (error) {
+                console.error('Error polling messages:', error);
+            }
+        }
+
+        // Show notification toast
+        function showNotification(notification) {
+            const toast = document.createElement('div');
+            toast.className = 'toast show';
+            toast.style.backgroundColor = '#fff';
+            toast.style.marginBottom = '10px';
+            
+            // Determine type of notification and customize the display
+            let title = 'New Notification';
+            let message = '';
+            let headerBg = 'bg-primary';
+            let icon = '';
+            
+            if (notification.message.type === 'SNS') {
+                // It's an SNS message
+                title = 'New SNS Message';
+                icon = '<i class="fas fa-cloud me-2 text-success"></i>';
+                headerBg = 'bg-success text-white';
+                
+                const data = notification.message.data || {};
+                
+                if (data.Subject) {
+                    message = `Subject: ${data.Subject}`;
+                } else if (data.Message) {
+                    message = `Message: ${data.Message.substring(0, 50)}${data.Message.length > 50 ? '...' : ''}`;
+                } else if (data.Type) {
+                    message = `Type: ${data.Type}`;
+                } else {
+                    message = 'New SNS notification received';
+                }
+            } else {
+                // Legacy receipt message
+                title = 'New Receipt';
+                icon = '<i class="fas fa-receipt me-2"></i>';
+                message = `Receipt from ${notification.message.fileName || notification.message.customerId || 'Unknown'}`;
+            }
+            
+            toast.innerHTML = `
+                <div class="toast-header ${headerBg}">
+                    ${icon}
+                    <strong class="me-auto">${title}</strong>
+                    <small>${new Date(notification.timestamp).toLocaleTimeString()}</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                </div>
+                <div class="toast-body">
+                    ${message}
+                </div>
+            `;
+            
+            document.getElementById('toastContainer').appendChild(toast);
+            
+            // Add to notification list
+            updateNotificationList();
+            
+            // Auto dismiss after 5 seconds
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+
+        // Update notification badge
+        function updateNotificationBadge() {
+            const badge = document.getElementById('notificationBadge');
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // Update notification list
+        function updateNotificationList() {
+            const notificationList = document.getElementById('notificationList');
+            notificationList.innerHTML = '';
+            
+            if (notifications.length === 0) {
+                notificationList.innerHTML = '<li class="notification-item">No notifications</li>';
+                return;
+            }
+            
+            notifications.slice(0, 10).forEach(notification => {
+                const item = document.createElement('li');
+                item.className = `notification-item ${notification.read ? '' : 'unread'}`;
+                
+                let title = 'Unknown';
+                let icon = '';
+                
+                if (notification.message.type === 'SNS') {
+                    // SNS message
+                    icon = '<i class="fas fa-cloud me-2 text-success"></i>';
+                    
+                    const data = notification.message.data || {};
+                    if (data.Subject) {
+                        title = data.Subject;
+                    } else if (data.Message) {
+                        // Try to get a title from the Message if it's JSON
+                        try {
+                            const msgObj = typeof data.Message === 'string' ? JSON.parse(data.Message) : data.Message;
+                            title = msgObj.title || msgObj.subject || msgObj.name || 'SNS Message';
+                        } catch {
+                            title = 'SNS Message';
+                        }
+                    } else if (data.TopicArn) {
+                        // Extract topic name from ARN
+                        const parts = data.TopicArn.split(':');
+                        title = parts[parts.length-1] || 'SNS Topic';
+                    } else {
+                        title = 'SNS Notification';
+                    }
+                } else {
+                    // Legacy receipt
+                    icon = '<i class="fas fa-receipt me-2"></i>';
+                    title = notification.message.fileName || notification.message.customerId || 'Receipt';
+                }
+                
+                item.innerHTML = `
+                    <div>
+                        ${icon}<strong>${title}</strong>
+                        <small class="text-muted d-block">${notification.timestamp.toLocaleTimeString()}</small>
+                    </div>
+                `;
+                
+                // Add click handler
+                item.addEventListener('click', function() {
+                    markAsRead(notification);
+                    openMessageDetail(notification);
+                });
+                
+                notificationList.appendChild(item);
+            });
+        }
+
+        // Mark notification as read
+        function markAsRead(notification) {
+            notification.read = true;
+            unreadCount = Math.max(0, unreadCount - 1);
+            updateNotificationBadge();
+            updateNotificationList();
+        }
+
+        // Open message detail modal
+        function openMessageDetail(notification) {
+            const modal = document.getElementById('messageDetailModal');
+            const content = document.getElementById('messageDetailContent');
+            const message = notification.message;
+            let html = '';
+            
+            if (message.type === 'SNS') {
+                // SNS message format
+                const data = message.data || {};
+                const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleString() : 'N/A';
+                
+                html = `
+                    <h3>SNS Message Details</h3>
+                    <div class="card mb-3">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-cloud me-2"></i>SNS Notification</h5>
+                            <small>${timestamp}</small>
+                        </div>
+                        <div class="card-body">
+                `;
+                
+                // Add SNS message details
+                if (data.Type) {
+                    html += `<p><strong>Message Type:</strong> ${data.Type}</p>`;
+                }
+                
+                if (data.Subject) {
+                    html += `<p><strong>Subject:</strong> ${data.Subject}</p>`;
+                }
+                
+                if (data.TopicArn) {
+                    html += `<p><strong>Topic ARN:</strong> ${data.TopicArn}</p>`;
+                }
+                
+                if (data.Message) {
+                    // Try to parse the Message as JSON
+                    try {
+                        const messageContent = typeof data.Message === 'string' ? JSON.parse(data.Message) : data.Message;
+                        html += `
+                            <h6 class="mt-3 mb-2">Message Content:</h6>
+                            <pre class="bg-light p-3 rounded">${JSON.stringify(messageContent, null, 2)}</pre>
+                        `;
+                    } catch (e) {
+                        // Display as plain text if not JSON
+                        html += `
+                            <h6 class="mt-3 mb-2">Message Content:</h6>
+                            <p>${data.Message}</p>
+                        `;
+                    }
+                }
+                
+                // Add full JSON view
+                html += `
+                    <h6 class="mt-3 mb-2">Full SNS Payload:</h6>
+                    <pre class="bg-light p-3 rounded">${JSON.stringify(data, null, 2)}</pre>
+                </div>
+                </div>
+                `;
+            } else {
+                // Legacy receipt format
+                html = `
+                    <h3>Receipt Details</h3>
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <p><strong>S3 Key:</strong> ${message.s3Key || 'N/A'}</p>
+                            <p><strong>S3 Bucket:</strong> ${message.s3Bucket || 'N/A'}</p>
+                            <p><strong>File Name:</strong> ${message.fileName || 'N/A'}</p>
+                            <p><strong>Customer ID:</strong> ${message.customerId || 'N/A'}</p>
+                            <p><strong>User ID:</strong> ${message.userId || 'N/A'}</p>
+                            <p><strong>Product Name:</strong> ${message.productName || 'N/A'}</p>
+                            <p><strong>Success:</strong> ${message.success ? 'Yes' : 'No'}</p>
+                            <p><strong>Message:</strong> ${message.message || 'N/A'}</p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Parse receipt data if available
+            if (notification.message.receiptData) {
+                try {
+                    const receiptData = JSON.parse(notification.message.receiptData);
+                    if (Array.isArray(receiptData) && receiptData.length > 0) {
+                        const receipt = receiptData[0]; // Get first receipt
+                        
+                        html += `
+                            <div class="card mb-3">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0">Receipt Details</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6>Merchant Information</h6>
+                                            <p><strong>Name:</strong> ${receipt.merchantName || 'N/A'}</p>
+                                            <p><strong>Address:</strong> ${receipt.merchantAddress ? receipt.merchantAddress.replace(/\n/g, '<br>') : 'N/A'}</p>
+                                            <p><strong>Phone:</strong> ${receipt.merchantPhoneNumber || 'N/A'}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6>Transaction Information</h6>
+                                            <p><strong>Date:</strong> ${receipt.transactionDate || 'N/A'}</p>
+                                            <p><strong>Time:</strong> ${receipt.transactionTime || 'N/A'}</p>
+                                            <p><strong>Total:</strong> ${receipt.total || 'N/A'}</p>
+                                            <p><strong>Subtotal:</strong> ${receipt.subtotal || 'N/A'}</p>
+                                            <p><strong>Tax:</strong> ${receipt.totalTax || 'N/A'}</p>
+                                            <p><strong>Tip:</strong> ${receipt.tip || 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <h6 class="mt-3">Items</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Description</th>
+                                                    <th>Quantity</th>
+                                                    <th>Unit Price</th>
+                                                    <th>Total Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${receipt.items && receipt.items.map(item => `
+                                                    <tr>
+                                                        <td>${item.description || 'N/A'}</td>
+                                                        <td>${item.quantity || 'N/A'}</td>
+                                                        <td>${item.price || 'N/A'}</td>
+                                                        <td>${item.totalPrice || 'N/A'}</td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        html += `<p><strong>Receipt Data:</strong> ${notification.message.receiptData}</p>`;
+                    }
+                } catch (e) {
+                    console.error('Error parsing receipt data:', e);
+                    html += `<p><strong>Receipt Data:</strong> ${notification.message.receiptData}</p>`;
+                }
+            }
+            
+            if (notification.message.preSignedUrl) {
+                html += `
+                    <h4 class="mt-4">Receipt Image</h4>
+                    <div class="text-center">
+                        <img src="${notification.message.preSignedUrl}" alt="Receipt" class="img-fluid" style="max-height: 500px;">
+                    </div>
+                </div>
+            `;
+            }
+            
+            content.innerHTML = html;
+            modal.style.display = 'block';
+        }
+
+        // Start polling for messages
+        pollMessages();
+        setInterval(pollMessages, 10000); // Poll every 10 seconds
+
+        // Event Listeners
+        document.getElementById('notificationBell').addEventListener('click', () => {
+            const container = document.getElementById('notificationContainer');
+            container.style.display = container.style.display === 'block' ? 'none' : 'block';
+        });
+
+        document.getElementById('closeModal').addEventListener('click', () => {
+            document.getElementById('messageDetailModal').style.display = 'none';
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', (event) => {
+            const modal = document.getElementById('messageDetailModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+
+        // Close notification panel when clicking elsewhere
+        document.addEventListener('click', (event) => {
+            const bell = document.getElementById('notificationBell');
+            const container = document.getElementById('notificationContainer');
+            
+            if (!bell.contains(event.target) && !container.contains(event.target) && container.style.display === 'block') {
+                container.style.display = 'none';
+            }
+        });
+
+        // Start polling
+        setInterval(pollMessages, 10000); // Poll every 10 seconds
+    </script>
+</body>
+</html>

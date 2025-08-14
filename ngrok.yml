@@ -1,0 +1,7 @@
+version: "2"
+authtoken: 7mwrnFSovJctRAk381qAN_2dtbMcPNCUvhNzA6RsFaz
+tunnels:
+  web:
+    proto: http
+    addr: 3000
+    domain: www.receipt-flow.io.vn
