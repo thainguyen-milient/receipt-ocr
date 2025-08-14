@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receipt Flow Processor</title>
+    <title>Milient Receipt Flow Processor</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -161,7 +161,10 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <div class="container">
-        <h1 class="text-center mb-4">Receipt Flow Processor</h1>
+        <div class="text-center mb-4">
+            <img src="milient-logo.webp" alt="Milient Logo" style="max-height: 60px; margin-bottom: 15px;">
+            <h1>Milient Receipt Flow Processor</h1>
+        </div>
         
         <div class="upload-section">
             <h3>Upload Receipt</h3>
@@ -172,15 +175,15 @@
                 </div>
                 <div class="mb-3">
                     <label for="companyId" class="form-label">Company ID</label>
-                    <input type="text" class="form-control" id="companyId" name="companyId">
+                    <input type="number" class="form-control" id="companyId" name="companyId" pattern="[0-9]*" onkeypress="return event.charCode >= 48 && event.charCode <= 57" min="0">
                 </div>
                 <div class="mb-3">
                     <label for="userId" class="form-label">User ID</label>
-                    <input type="text" class="form-control" id="userId" name="userId">
+                    <input type="number" class="form-control" id="userId" name="userId" pattern="[0-9]*" onkeypress="return event.charCode >= 48 && event.charCode <= 57" min="0">
                 </div>
                 <div class="mb-3">
                     <label for="fileId" class="form-label">File ID</label>
-                    <input type="text" class="form-control" id="fileId" name="fileId">
+                    <input type="number" class="form-control" id="fileId" name="fileId" pattern="[0-9]*" onkeypress="return event.charCode >= 48 && event.charCode <= 57" min="0">
                 </div>
                 <div class="mb-3">
                     <label for="authToken" class="form-label">Authorization Token</label>
@@ -257,6 +260,11 @@
                             <i class="fas fa-check-circle me-2"></i>File uploaded successfully!
                         </div>
                     `;
+                    
+                    // Auto clear success message after 5 seconds
+                    setTimeout(() => {
+                        document.getElementById('uploadStatus').innerHTML = '';
+                    }, 5000);
                 } else {
                     throw new Error(result.error || 'Unknown error');
                 }
@@ -453,6 +461,15 @@
                 
                 // Check for new messages
                 messages.forEach(message => {
+                    // Skip SubscriptionConfirmation and SubscriptionConfirmationSuccess messages
+                    if (message.type === 'SNS' && 
+                        message.data && 
+                        (message.data.Type === 'SubscriptionConfirmation' || 
+                         message.data.Type === 'SubscriptionConfirmationSuccess')) {
+                        console.log('Skipping subscription confirmation message:', message.data.Type);
+                        return;
+                    }
+                    
                     // Generate a unique ID for the message based on its content
                     let messageId;
                     
