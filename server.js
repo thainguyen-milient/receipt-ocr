@@ -10,19 +10,35 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Configure multer for file upload
+// Configure multer for file upload - make it compatible with serverless environment
+let uploadDir = 'uploads/';
+// In Vercel's serverless environment, use /tmp directory for file uploads
+if (process.env.NODE_ENV === 'production') {
+  uploadDir = '/tmp/';
+}
+
 const upload = multer({
-  dest: 'uploads/',
+  dest: uploadDir,
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB limit
   }
 });
 
-// Configure AWS SDK to use profile
-AWS.config.update({
-  region: process.env.AWS_REGION || 'eu-north-1',
-  credentials: new AWS.SharedIniFileCredentials({ profile: '074993326121_LocalDevelopmentAccess' })
-});
+// Configure AWS SDK - handle both local development and Vercel environment
+if (process.env.NODE_ENV === 'production') {
+  // In production (Vercel), use environment variables for AWS credentials
+  AWS.config.update({
+    region: process.env.AWS_REGION || 'eu-north-1',
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  });
+} else {
+  // In local development, use profile credentials
+  AWS.config.update({
+    region: process.env.AWS_REGION || 'eu-north-1',
+    credentials: new AWS.SharedIniFileCredentials({ profile: '074993326121_LocalDevelopmentAccess' })
+  });
+}
 
 const sqs = new AWS.SQS();
 
@@ -236,6 +252,12 @@ app.post('/api/sns', bodyParser.json(), async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+// Only start the server if we're not in a serverless environment
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
+}
+
+// Export the app for Vercel serverless deployment
+module.exports = app;
