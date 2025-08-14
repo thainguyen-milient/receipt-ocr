@@ -825,6 +825,16 @@
         document.getElementById('notificationBell').addEventListener('click', () => {
             const container = document.getElementById('notificationContainer');
             container.style.display = container.style.display === 'block' ? 'none' : 'block';
+            
+            // Clear the badge when clicking the bell
+            unreadCount = 0;
+            updateNotificationBadge();
+            
+            // Mark all notifications as read
+            notifications.forEach(notification => {
+                notification.read = true;
+            });
+            updateNotificationList();
         });
 
         document.getElementById('closeModal').addEventListener('click', () => {
