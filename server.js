@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const { promises: fsPromises } = require('fs');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -126,13 +127,43 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 
 // SQS function has been removed
 
-// Store messages for display
+// Store messages for display with file persistence
 let messages = [];
-function storeMessage(message) {
+const messagesFilePath = path.join(__dirname, 'messages.json');
+
+// Load messages from file on startup
+async function loadMessages() {
+  try {
+    if (fs.existsSync(messagesFilePath)) {
+      const data = await fsPromises.readFile(messagesFilePath, 'utf8');
+      messages = JSON.parse(data);
+      console.log(`Loaded ${messages.length} messages from storage`);
+    } else {
+      console.log('No messages file found, starting with empty messages array');
+      messages = [];
+    }
+  } catch (error) {
+    console.error('Error loading messages from file:', error);
+    messages = [];
+  }
+}
+
+// Save messages to file
+async function saveMessages() {
+  try {
+    await fsPromises.writeFile(messagesFilePath, JSON.stringify(messages, null, 2));
+  } catch (error) {
+    console.error('Error saving messages to file:', error);
+  }
+}
+
+// Store message in memory and persist to file
+async function storeMessage(message) {
   messages.push(message);
   if (messages.length > 10) { // Keep only last 10 messages
     messages.shift();
   }
+  await saveMessages();
 }
 
 // Verify SNS message signature (best practice for production)
@@ -184,7 +215,7 @@ app.post('/api/sns', bodyParser.json(), async (req, res) => {
     console.log('Received SNS message:', message);
     
     // Store all SNS messages for display regardless of type
-    storeMessage({
+    await storeMessage({
       type: 'SNS',
       timestamp: new Date().toISOString(),
       data: message
@@ -203,7 +234,7 @@ app.post('/api/sns', bodyParser.json(), async (req, res) => {
         console.log('Subscription confirmed successfully:', response.data);
         
         // Store success message
-        storeMessage({
+        await storeMessage({
           type: 'SNS',
           timestamp: new Date().toISOString(),
           data: {
@@ -244,7 +275,7 @@ app.post('/api/sns', bodyParser.json(), async (req, res) => {
     
     // Even on error, store the message for debugging
     try {
-      storeMessage({
+      await storeMessage({
         type: 'SNS',
         timestamp: new Date().toISOString(),
         data: { error: error.message, originalRequest: req.body },
@@ -260,9 +291,15 @@ app.post('/api/sns', bodyParser.json(), async (req, res) => {
 
 // Only start the server if we're not in a serverless environment
 if (process.env.NODE_ENV !== 'production') {
-  app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+  // Load messages before starting the server
+  loadMessages().then(() => {
+    app.listen(port, () => {
+      console.log(`Server running on port ${port}`);
+    });
   });
+} else {
+  // For serverless environment, load messages on module initialization
+  loadMessages();
 }
 
 // Export the app for Vercel serverless deployment
