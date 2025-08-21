@@ -105,7 +105,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
       
       res.json({ 
         success: true, 
-        message: 'File uploaded successfully', 
+        message: 'File uploaded successfully, receipt-flow is processing your receipt. it may take a few moments. Please check the notification bell for updates.', 
         apiResponse: response,
         fileName: req.file.originalname
       });
