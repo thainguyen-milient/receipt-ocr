@@ -1,1 +1,43 @@
-[]
+[
+    {
+        "s3Key": "milient-test-product-1755749279471-test_5.jpg",
+        "s3Bucket": "milient-test-product",
+        "fileName": "test_5.jpg",
+        "productName": "milient-test-product",
+        "success": true,
+        "message": "File processed successfully",
+        "receiptData": "[{\"merchantName\":\"Grand Brasserie Linköping AB\",\"merchantAddress\":\"Platensgatan 4, 582 20 Linköping\",\"merchantPhoneNumber\":\"\",\"total\":\"39.0\",\"transactionDate\":\"2024-03-02\",\"transactionTime\":\"19:27:02\",\"subtotal\":\"\",\"totalTax\":\"4.18 SEK\",\"tip\":\"\",\"countryRegion\":\"\",\"receiptType\":\"\",\"items\":[{\"totalPrice\":\"39.0 SEK\",\"description\":\"Pepsi\",\"quantity\":\"\",\"price\":\"\",\"productCode\":\"\",\"quantityUnit\":\"\"}],\"payments\":[],\"taxDetails\":[{\"amount\":\"4.18 SEK\",\"rate\":\"12 %\",\"netAmount\":\"34.82 SEK\",\"description\":\"\"}]}]",
+        "preSignedUrl": "https://milient-test-product.s3.eu-north-1.amazonaws.com/milient-test-product-1755749279471-test_5.jpg?X-Amz-Security-Token=IQoJb3JpZ2luX2VjEJz%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCmV1LW5vcnRoLTEiRzBFAiAceFhhn5OdLr4qbJJVk6A2QAJXj%2FaMzZ4337XHQ%2B5TSQIhAIODFQTul4rTp83brMO%2FORitnUvFbtTHJksgkhIj0FEDKo4DCOX%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEQABoMMDc0OTkzMzI2MTIxIgzbplY%2Bsg0UucFl4Wwq4gJBAloKl%2FpVi%2BCXjZSUKfNIs2wb38N0ZN7EMklDOu8FS0crlwQEzXw8FWGYkvnaKz0KBhdnE76u3V3kMoO45XkCPv3ZqkE7EhCQEbRTdWeNvnd906vVveS7KW86y566DtLJgGqcgG25jz6MqV71MTbpyjTxzu1yHyIyxuil3CcjSN39WPgiwWBR8E79passpolX6mfviTRglWmJMki4X%2BQ8sxgJmo%2BeFfcE0JZDFolX1hKO97sGDifK9FBRb6ZOtpeKvncTONEqHwScyLIjy%2F41KF2Ejm%2F7mNbt7vO4Zw4c0gbRZhaKhQA7kBykwxCPXv%2FEqKRIW99Z%2FLiUVokHQb0IMRSiVcBi9drE6F6sZzrTGby9PCkkMSDs74kcTbAr6Si2TURez3tKW7Vpf3bIJOKZpGNeI%2B%2F1xbqHxZVRTuNbsdWL2O%2FWFl9uLdB%2B1NSQjx%2BZNL96m%2BxwbfwcY5EG8v49rTYwxLaaxQY6ngHT4UoQxNL9yy%2B8ELNnjGu5lX0h4U1pOuOcqdqJlsGPtIBA9Qqy4ImNQ4oe9oaZ1ZH93nTkxkjIMEpAP9CPwGFKIfY57H%2B9vd2np7pK2WSUl4PdAOmef3AjBpzi2Aqx9KtYxzOkjqANBisNcZhKDQNTZyBJLhVKB425aCO9%2Fg5zpY83i9ON6SjJ8xxbPIV54tGG%2B%2FwdJvLT1jm3GQYmEA%3D%3D&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20250821T040818Z&X-Amz-SignedHeaders=host&X-Amz-Credential=ASIARC5PTLAUT467WQOV%2F20250821%2Feu-north-1%2Fs3%2Faws4_request&X-Amz-Expires=604800&X-Amz-Signature=ed00b98315ab75e9b725ff3abebe465f58e1952f52367557b648703ec066ed31",
+        "receiptSource": "email",
+        "sender": "thai.nguyen@milientsoftware.com",
+        "sentDate": "2025-08-21 04:07:42",
+        "receiver": "milient-test-product@receipt-flow.io.vn"
+      },
+      {
+        "s3Key": "milient-test-product-1755749278700-20240528 - Thon Hotels - Receipt.pdf",
+        "s3Bucket": "milient-test-product",
+        "fileName": "20240528 - Thon Hotels - Receipt.pdf",
+        "productName": "milient-test-product",
+        "success": true,
+        "message": "File processed successfully",
+        "receiptData": "[{\"merchantName\":\"Thon Hotel Slottsparken\",\"merchantAddress\":\"Wergelandsveien 5, Oslo\",\"merchantPhoneNumber\":\"+47 23256600\",\"total\":\"3264.0\",\"transactionDate\":\"\",\"transactionTime\":\"\",\"subtotal\":\"\",\"totalTax\":\"\",\"tip\":\"\",\"countryRegion\":\"\",\"receiptType\":\"\",\"items\":[{\"totalPrice\":\"3264.0 NOK\",\"description\":\"Bed & Breakfast\",\"quantity\":\"\",\"price\":\"\",\"productCode\":\"\",\"quantityUnit\":\"\"},{\"totalPrice\":\"92.0 NOK\",\"description\":\"Breakfast\",\"quantity\":\"\",\"price\":\"\",\"productCode\":\"\",\"quantityUnit\":\"\"},{\"totalPrice\":\"3172.0 NOK\",\"description\":\"Room revenue\",\"quantity\":\"\",\"price\":\"\",\"productCode\":\"\",\"quantityUnit\":\"\"}],\"payments\":[],\"taxDetails\":[{\"amount\":\"339.86 NOK\",\"rate\":\"12%\",\"netAmount\":\"2832.17 NOK\",\"description\":\"VAT\"},{\"amount\":\"18.4 NOK\",\"rate\":\"25 %\",\"netAmount\":\"73.6 NOK\",\"description\":\"VAT\"}]}]",
+        "preSignedUrl": "https://milient-test-product.s3.eu-north-1.amazonaws.com/milient-test-product-1755749278700-20240528%20-%20Thon%20Hotels%20-%20Receipt.pdf?X-Amz-Security-Token=IQoJb3JpZ2luX2VjEJz%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCmV1LW5vcnRoLTEiRzBFAiAceFhhn5OdLr4qbJJVk6A2QAJXj%2FaMzZ4337XHQ%2B5TSQIhAIODFQTul4rTp83brMO%2FORitnUvFbtTHJksgkhIj0FEDKo4DCOX%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEQABoMMDc0OTkzMzI2MTIxIgzbplY%2Bsg0UucFl4Wwq4gJBAloKl%2FpVi%2BCXjZSUKfNIs2wb38N0ZN7EMklDOu8FS0crlwQEzXw8FWGYkvnaKz0KBhdnE76u3V3kMoO45XkCPv3ZqkE7EhCQEbRTdWeNvnd906vVveS7KW86y566DtLJgGqcgG25jz6MqV71MTbpyjTxzu1yHyIyxuil3CcjSN39WPgiwWBR8E79passpolX6mfviTRglWmJMki4X%2BQ8sxgJmo%2BeFfcE0JZDFolX1hKO97sGDifK9FBRb6ZOtpeKvncTONEqHwScyLIjy%2F41KF2Ejm%2F7mNbt7vO4Zw4c0gbRZhaKhQA7kBykwxCPXv%2FEqKRIW99Z%2FLiUVokHQb0IMRSiVcBi9drE6F6sZzrTGby9PCkkMSDs74kcTbAr6Si2TURez3tKW7Vpf3bIJOKZpGNeI%2B%2F1xbqHxZVRTuNbsdWL2O%2FWFl9uLdB%2B1NSQjx%2BZNL96m%2BxwbfwcY5EG8v49rTYwxLaaxQY6ngHT4UoQxNL9yy%2B8ELNnjGu5lX0h4U1pOuOcqdqJlsGPtIBA9Qqy4ImNQ4oe9oaZ1ZH93nTkxkjIMEpAP9CPwGFKIfY57H%2B9vd2np7pK2WSUl4PdAOmef3AjBpzi2Aqx9KtYxzOkjqANBisNcZhKDQNTZyBJLhVKB425aCO9%2Fg5zpY83i9ON6SjJ8xxbPIV54tGG%2B%2FwdJvLT1jm3GQYmEA%3D%3D&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20250821T040803Z&X-Amz-SignedHeaders=host&X-Amz-Credential=ASIARC5PTLAUT467WQOV%2F20250821%2Feu-north-1%2Fs3%2Faws4_request&X-Amz-Expires=604800&X-Amz-Signature=adb2e2c7ab56dd48bb40432321ed5536b57dee8b2926cd3a4427a148e4d7e6a1",
+        "receiptSource": "email",
+        "sender": "thai.nguyen@milientsoftware.com",
+        "sentDate": "2025-08-21 04:07:42",
+        "receiver": "milient-test-product@receipt-flow.io.vn"
+      },
+      {
+        "s3Key": "milient-test-product-123456789-1755749183323-test_2.jpg",
+        "s3Bucket": "milient-test-product",
+        "fileName": "test_2.jpg",
+        "customerId": "123456789",
+        "userId": "123456789",
+        "productName": "milient-test-product",
+        "success": true,
+        "message": "File processed successfully",
+        "receiptData": "[{\"merchantName\":\"DOCKSIDE RESTAURANT\\nTab Bar\\nA\\nEn\",\"merchantAddress\":\"1787 Castlewood Dr.\\nColonial Beach VA\",\"merchantPhoneNumber\":\"804-224-8728\",\"total\":\"109.69 USD\",\"transactionDate\":\"2016-08-14\",\"transactionTime\":\"18:52:00\",\"subtotal\":\"99.45 USD\",\"totalTax\":\"10.24 USD\",\"tip\":\"\",\"countryRegion\":\"\",\"receiptType\":\"\",\"items\":[{\"totalPrice\":\"19.5 USD\",\"description\":\"Stoli\",\"quantity\":\"3\",\"price\":\"6.5 USD\",\"productCode\":\"\",\"quantityUnit\":\"\"},{\"totalPrice\":\"13.0 USD\",\"description\":\"Stoli\",\"quantity\":\"2\",\"price\":\"6.5 USD\",\"productCode\":\"\",\"quantityUnit\":\"\"},{\"totalPrice\":\"2.0 USD\",\"description\":\"Splash ORANGE JUICE\",\"quantity\":\"\",\"price\":\"\",\"productCode\":\"\",\"quantityUnit\":\"\"},{\"totalPrice\":\"7.5 USD\",\"description\":\"Orange Crush\",\"quantity\":\"\",\"price\":\"\",\"productCode\":\"\",\"quantityUnit\":\"\"},{\"totalPrice\":\"9.99 USD\",\"description\":\"The Godfather\",\"quantity\":\"\",\"price\":\"\",\"productCode\":\"\",\"quantityUnit\":\"\"},{\"totalPrice\":\"9.99 USD\",\"description\":\"Dockside Burger\",\"quantity\":\"\",\"price\":\"\",\"productCode\":\"\",\"quantityUnit\":\"\"},{\"totalPrice\":\"7.98 USD\",\"description\":\"House Salad\",\"quantity\":\"2\",\"price\":\"3.99 USD\",\"productCode\":\"\",\"quantityUnit\":\"\"},{\"totalPrice\":\"23.99 USD\",\"description\":\"Seafood Alfredo\",\"quantity\":\"\",\"price\":\"\",\"productCode\":\"\",\"quantityUnit\":\"\"}],\"payments\":[],\"taxDetails\":[]}]",
+        "preSignedUrl": "https://milient-test-product.s3.eu-north-1.amazonaws.com/milient-test-product-123456789-1755749183323-test_2.jpg?X-Amz-Security-Token=IQoJb3JpZ2luX2VjEJz%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCmV1LW5vcnRoLTEiRzBFAiAceFhhn5OdLr4qbJJVk6A2QAJXj%2FaMzZ4337XHQ%2B5TSQIhAIODFQTul4rTp83brMO%2FORitnUvFbtTHJksgkhIj0FEDKo4DCOX%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEQABoMMDc0OTkzMzI2MTIxIgzbplY%2Bsg0UucFl4Wwq4gJBAloKl%2FpVi%2BCXjZSUKfNIs2wb38N0ZN7EMklDOu8FS0crlwQEzXw8FWGYkvnaKz0KBhdnE76u3V3kMoO45XkCPv3ZqkE7EhCQEbRTdWeNvnd906vVveS7KW86y566DtLJgGqcgG25jz6MqV71MTbpyjTxzu1yHyIyxuil3CcjSN39WPgiwWBR8E79passpolX6mfviTRglWmJMki4X%2BQ8sxgJmo%2BeFfcE0JZDFolX1hKO97sGDifK9FBRb6ZOtpeKvncTONEqHwScyLIjy%2F41KF2Ejm%2F7mNbt7vO4Zw4c0gbRZhaKhQA7kBykwxCPXv%2FEqKRIW99Z%2FLiUVokHQb0IMRSiVcBi9drE6F6sZzrTGby9PCkkMSDs74kcTbAr6Si2TURez3tKW7Vpf3bIJOKZpGNeI%2B%2F1xbqHxZVRTuNbsdWL2O%2FWFl9uLdB%2B1NSQjx%2BZNL96m%2BxwbfwcY5EG8v49rTYwxLaaxQY6ngHT4UoQxNL9yy%2B8ELNnjGu5lX0h4U1pOuOcqdqJlsGPtIBA9Qqy4ImNQ4oe9oaZ1ZH93nTkxkjIMEpAP9CPwGFKIfY57H%2B9vd2np7pK2WSUl4PdAOmef3AjBpzi2Aqx9KtYxzOkjqANBisNcZhKDQNTZyBJLhVKB425aCO9%2Fg5zpY83i9ON6SjJ8xxbPIV54tGG%2B%2FwdJvLT1jm3GQYmEA%3D%3D&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20250821T040646Z&X-Amz-SignedHeaders=host&X-Amz-Credential=ASIARC5PTLAUT467WQOV%2F20250821%2Feu-north-1%2Fs3%2Faws4_request&X-Amz-Expires=604800&X-Amz-Signature=e7690149d054cdc9f9a6d0555f7a0a7f84c9360226d61a96684fed341f55bf3b",
+        "receiptSource": "api"
+      }
+]
