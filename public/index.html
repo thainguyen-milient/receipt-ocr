@@ -336,14 +336,18 @@
                         <p><strong>S3 Key:</strong> ${data.s3Key || 'N/A'}</p>
                         <p><strong>S3 Bucket:</strong> ${data.s3Bucket || 'N/A'}</p>
                         <p><strong>File Name:</strong> ${data.fileName || 'N/A'}</p>
-                        <p><strong>Customer ID:</strong> ${data.customerId || 'N/A'}</p>
-                        <p><strong>User ID:</strong> ${data.userId || 'N/A'}</p>
                         <p><strong>Product Name:</strong> ${data.productName || 'N/A'}</p>
                         <p><strong>Receipt Source:</strong> ${data.receiptSource || 'N/A'}</p>
                         <p><strong>Success:</strong> ${data.success ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-danger">No</span>'}</p>
+                        <hr class="my-2">
+                        <p><strong>Type:</strong> ${data.customerId ? '<span class="badge bg-warning text-dark">API-receipt</span>' : '<span class="badge bg-warning text-dark">Email-receipt</span>'}</p>
+                        ${data.customerId ? `
+                        <p><strong>Customer ID:</strong> ${data.customerId || 'N/A'}</p>
+                        <p><strong>User ID:</strong> ${data.userId || 'N/A'}</p>
+                        ` : `
                         <p><strong>Sender:</strong> ${data.sender || 'N/A'}</p>
                         <p><strong>Receiver:</strong> ${data.receiver || 'N/A'}</p>
-                        <p><strong>Sent date:</strong> ${data.sentDate || 'N/A'}</p>
+                        <p><strong>Sent date:</strong> ${data.sentDate || 'N/A'}</p>`}
                         <p><strong>Message:</strong> ${data.message || 'N/A'}</p>
                     `;
                 } else {
