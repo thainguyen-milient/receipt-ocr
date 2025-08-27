@@ -37,6 +37,45 @@ if (process.env.NODE_ENV === 'production') {
 
 const sqs = new AWS.SQS();
 
+// Check SQS connection and log status
+async function checkSQSConnection() {
+  try {
+    console.log('Checking AWS SQS connection...');
+    
+    // Check if SQS queue URL is configured
+    if (!process.env.SQS_QUEUE_URL) {
+      console.warn('⚠️ SQS_QUEUE_URL not configured. SQS functionality will be limited to mock data.');
+      return false;
+    }
+    
+    // Try to get queue attributes to verify connection
+    const params = {
+      QueueUrl: process.env.SQS_QUEUE_URL,
+      AttributeNames: ['QueueArn']
+    };
+    
+    const data = await sqs.getQueueAttributes(params).promise();
+    
+    if (data && data.Attributes && data.Attributes.QueueArn) {
+      console.log('✅ Successfully connected to AWS SQS queue:', data.Attributes.QueueArn);
+      return true;
+    } else {
+      console.warn('⚠️ Connected to AWS SQS but could not retrieve queue attributes');
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ AWS SQS connection failed:', error.message);
+    if (error.code === 'CredentialsError') {
+      console.error('❌ AWS credentials are missing or invalid');
+    } else if (error.code === 'AWS.SimpleQueueService.NonExistentQueue') {
+      console.error('❌ SQS queue does not exist:', process.env.SQS_QUEUE_URL);
+    } else if (error.code === 'NetworkingError') {
+      console.error('❌ Network error when connecting to AWS SQS');
+    }
+    return false;
+  }
+}
+
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
@@ -261,9 +300,69 @@ async function makeApiRequest(data, authToken, productName) {
 // SQS polling endpoint
 app.get('/api/sqs/poll', async (req, res) => {
   try {
-    // Check if we should use mock data (no AWS credentials or in development)
-    if (!process.env.AWS_ACCESS_KEY_ID || process.env.NODE_ENV === 'development') {
-     
+    console.log('SQS poll request received');
+    
+    // Check if we should use mock data (no AWS credentials, failed connection, or in development)
+    if (!sqsConnected || !process.env.AWS_ACCESS_KEY_ID || process.env.NODE_ENV === 'development') {
+      console.log('Using mock SQS data (connection status: ' + (sqsConnected ? 'connected' : 'not connected') + ')');
+      
+      // Define mock messages for testing
+      const mockMessages = [
+        {
+          MessageId: 'mock-msg-' + Date.now(),
+          ReceiptHandle: 'mock-receipt-handle',
+          Body: JSON.stringify({
+            s3Key: 'receipts/mock-receipt-123.jpg',
+            s3Bucket: 'mock-receipt-bucket',
+            fileName: 'mock-receipt-123.jpg',
+            customerId: 'customer-456',
+            userId: 'user-789',
+            productName: 'milient-test-product',
+            success: true,
+            message: 'Mock receipt processed successfully',
+            receiptData: JSON.stringify([{
+              merchantName: 'Mock Coffee Shop',
+              merchantAddress: '123 Mock Street\nMock City, MC 12345',
+              merchantPhoneNumber: '555-123-4567',
+              date: '2025-08-27',
+              time: '10:00 AM',
+              total: 12.99,
+              currency: 'USD',
+              items: [
+                { name: 'Coffee', price: 4.99, quantity: 1 },
+                { name: 'Sandwich', price: 8.00, quantity: 1 }
+              ],
+              paymentMethod: 'Credit Card',
+              cardLast4: '1234'
+            }]),
+            preSignedUrl: 'https://via.placeholder.com/800x600.png?text=Mock+Receipt+Image'
+          })
+        }
+      ];
+      
+      // Store the mock messages
+      for (const message of mockMessages) {
+        try {
+          let messageBody;
+          try {
+            messageBody = JSON.parse(message.Body);
+          } catch (e) {
+            messageBody = { raw: message.Body };
+          }
+          
+          await storeMessage({
+            type: 'SQS',
+            timestamp: new Date().toISOString(),
+            data: messageBody,
+            messageId: message.MessageId
+          });
+          
+          console.log(`Stored mock message ${message.MessageId}`);
+        } catch (messageError) {
+          console.error('Error processing mock SQS message:', messageError);
+        }
+      }
+      
       return res.json(mockMessages);
     }
     
@@ -287,7 +386,7 @@ app.post('/api/sns', bodyParser.json(), async (req, res) => {
     const message = req.body;
     console.log('Received SNS message:', message);
     
-    if(message.Message.userId === "1234") {
+    if(message.userId === "1234") {
         res.status(500).send('Error for test DLQ');
     }
 
@@ -369,14 +468,24 @@ app.post('/api/sns', bodyParser.json(), async (req, res) => {
 // Only start the server if we're not in a serverless environment
 if (process.env.NODE_ENV !== 'production') {
   // Load messages before starting the server
-  loadMessages().then(() => {
+  loadMessages().then(async () => {
+    // Check SQS connection before starting the server
+    console.log('\n===  AWS SQS CONNECTION CHECK ===');
+    const sqsConnected = await checkSQSConnection();
+    console.log('=== SQS CONNECTION STATUS: ' + (sqsConnected ? 'CONNECTED ✅' : 'NOT CONNECTED ❌') + ' ===\n');
+    
     app.listen(port, () => {
       console.log(`Server running on port ${port}`);
     });
   });
 } else {
   // For serverless environment, load messages on module initialization
-  loadMessages();
+  loadMessages().then(async () => {
+    // Check SQS connection in production environment
+    console.log('\n=== AWS SQS CONNECTION CHECK (PRODUCTION) ===');
+    const sqsConnected = await checkSQSConnection();
+    console.log('=== SQS CONNECTION STATUS: ' + (sqsConnected ? 'CONNECTED ✅' : 'NOT CONNECTED ❌') + ' ===\n');
+  });
 }
 
 // Export the app for Vercel serverless deployment

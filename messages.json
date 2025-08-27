@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "type": "SQS",
+    "timestamp": "2025-08-27T06:51:40.845Z",
+    "data": {
+      "s3Key": "milient-test-product-123456789-1756276895039-test_2.jpg",
+      "s3Bucket": "milient-test-product",
+      "fileName": "test_2.jpg",
+      "customerId": "123456789",
+      "userId": "1234",
+      "productName": "milient-test-product",
+      "success": true,
+      "message": "File processed successfully",
+      "receiptData": "[{\"merchantName\":\"DOCKSIDE RESTAURANT\\nTab Bar\\nA\\nEn\",\"merchantAddress\":\"1787 Castlewood Dr.\\nColonial Beach VA\",\"merchantPhoneNumber\":\"804-224-8728\",\"total\":\"109.69 USD\",\"transactionDate\":\"2016-08-14\",\"transactionTime\":\"18:52:00\",\"subtotal\":\"99.45 USD\",\"totalTax\":\"10.24 USD\",\"tip\":\"\",\"countryRegion\":\"\",\"receiptType\":\"\",\"items\":[{\"totalPrice\":\"19.5 USD\",\"description\":\"Stoli\",\"quantity\":\"3\",\"price\":\"6.5 USD\",\"productCode\":\"\",\"quantityUnit\":\"\"},{\"totalPrice\":\"13.0 USD\",\"description\":\"Stoli\",\"quantity\":\"2\",\"price\":\"6.5 USD\",\"productCode\":\"\",\"quantityUnit\":\"\"},{\"totalPrice\":\"2.0 USD\",\"description\":\"Splash ORANGE JUICE\",\"quantity\":\"\",\"price\":\"\",\"productCode\":\"\",\"quantityUnit\":\"\"},{\"totalPrice\":\"7.5 USD\",\"description\":\"Orange Crush\",\"quantity\":\"\",\"price\":\"\",\"productCode\":\"\",\"quantityUnit\":\"\"},{\"totalPrice\":\"9.99 USD\",\"description\":\"The Godfather\",\"quantity\":\"\",\"price\":\"\",\"productCode\":\"\",\"quantityUnit\":\"\"},{\"totalPrice\":\"9.99 USD\",\"description\":\"Dockside Burger\",\"quantity\":\"\",\"price\":\"\",\"productCode\":\"\",\"quantityUnit\":\"\"},{\"totalPrice\":\"7.98 USD\",\"description\":\"House Salad\",\"quantity\":\"2\",\"price\":\"3.99 USD\",\"productCode\":\"\",\"quantityUnit\":\"\"},{\"totalPrice\":\"23.99 USD\",\"description\":\"Seafood Alfredo\",\"quantity\":\"\",\"price\":\"\",\"productCode\":\"\",\"quantityUnit\":\"\"}],\"payments\":[],\"taxDetails\":[]}]",
+      "preSignedUrl": "https://milient-test-product.s3.eu-north-1.amazonaws.com/milient-test-product-123456789-1756276895039-test_2.jpg?X-Amz-Security-Token=IQoJb3JpZ2luX2VjEC4aCmV1LW5vcnRoLTEiRzBFAiEAiKm4MHZ27NWpV2f0srbD7i2USLkSlgzGaepS2Txrnp8CIDcKDG1yxU%2BHKo6knsvF1yWCm%2FtcsSGyc74mRUqZPeR1Ko4DCIj%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEQABoMMDc0OTkzMzI2MTIxIgzklY4eV6u4fGlz9Cwq4gLyCR4gYe5uiUbEgEytcoWFagkAasvKPQ3%2FHg0%2BIID7YwvWq0Qb9sKqa6TXiyledqSrIV22HGMT4%2FjOjo8pznSc6elzY6XiwDT5ndVx2NyATXoXyavX05O5DXfz8DApUYtHeG319jdTJePzUtzkSai1O2%2F3su6R6W%2BPzv5kW2wNNw1YSlYwuYW16mrtbqGDJOGgI95EutR5CXQSDkjgKE327uOjNuqGw1wMe4NHUBFedhxh6LBJKVO3Nt9D3GC5AJtqwUosCUa6%2FxKWfPd%2B%2FWwE2jXgRFL5MgwRbUGy90dthgciSJu9a9M7Gjq0YplvICHiDnsl%2B7G4kPEOt6iqYPgDdUb%2B3HGecVexjNqtvzOY4HGH6eZmrOHI%2B7P7npQvQhsNSe%2F78DBHN0pmsnwHuN4NGc8X3MgGjUUbPtxmotmsvOyQrNwlANNsxDTshFrOIKof%2BRWfbrS2w%2BxdQX3cZoHdSTQwpNG6xQY6ngGgO5GYNVKQmzlE2FAVIKdq5QRUYkvq9V%2B0OneNMFrC7pkLVUQnsJtrVjgQw28i6wB96fTL%2Bfw%2B326C2qWB1u60mII4r%2FJl4S8CQLkiqCQeu4m6lKuQgjJag%2FYb4unktx74%2FywN%2BsW2LXs7gcZtZepyMhHyqwFbEh0wDyuFoxop7Hh17q4EU0rVfZN6pm0IPta7k%2F6WaCr%2FIAIjgaRGAQ%3D%3D&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20250827T064205Z&X-Amz-SignedHeaders=host&X-Amz-Credential=ASIARC5PTLAUYLV6V32C%2F20250827%2Feu-north-1%2Fs3%2Faws4_request&X-Amz-Expires=604800&X-Amz-Signature=42b3c5c33b13674486ebaa6d4cd24b86183dceb3c108da369a4e731691d501cd",
+      "receiptSource": "api"
+    },
+    "messageId": "bea65f4c-3fc0-4c92-bf68-014101b7e4a0"
+  }
+]
