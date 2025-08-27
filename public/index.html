@@ -579,7 +579,8 @@
                             (message.data ? JSON.stringify(message.data).length : 'unknown');
                     } else {
                         // For legacy messages
-                        messageId = message.s3Key || message.fileName || ('msg-' + Date.now());
+                        messageId = 'sqs-' + message.timestamp + '-' + 
+                            (message.data ? JSON.stringify(message.data).length : 'unknown');
                     }
                     
                     // If this is a new message we haven't seen before
@@ -1020,7 +1021,7 @@
 
         // Start polling for messages
         pollMessages();
-        setInterval(pollMessages, 600000); // Poll every 5 minutes
+        setInterval(pollMessages, 30000); // Poll every 30 seconds
 
         // Event Listeners
         document.getElementById('notificationBell').addEventListener('click', () => {

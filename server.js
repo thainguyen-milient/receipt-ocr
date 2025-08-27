@@ -314,74 +314,7 @@ async function makeApiRequest(data, authToken, productName) {
 app.get('/api/sqs/poll', async (req, res) => {
   try {
     console.log('SQS poll request received');
-    
-    // First check SQS connection
-    const sqsConnected = await checkSQSConnection();
-    
-    // Check if we should use mock data (failed connection or in development without profile)
-    if (!sqsConnected) {
-      console.log('Using mock SQS data (connection status: not connected)');
-      
-      // Define mock messages for testing
-      const mockMessages = [
-        {
-          MessageId: 'mock-msg-' + Date.now(),
-          ReceiptHandle: 'mock-receipt-handle',
-          Body: JSON.stringify({
-            s3Key: 'receipts/mock-receipt-123.jpg',
-            s3Bucket: 'mock-receipt-bucket',
-            fileName: 'mock-receipt-123.jpg',
-            customerId: 'customer-456',
-            userId: 'user-789',
-            productName: 'milient-test-product',
-            success: true,
-            message: 'Mock receipt processed successfully',
-            receiptData: JSON.stringify([{
-              merchantName: 'Mock Coffee Shop',
-              merchantAddress: '123 Mock Street\nMock City, MC 12345',
-              merchantPhoneNumber: '555-123-4567',
-              date: '2025-08-27',
-              time: '10:00 AM',
-              total: 12.99,
-              currency: 'USD',
-              items: [
-                { name: 'Coffee', price: 4.99, quantity: 1 },
-                { name: 'Sandwich', price: 8.00, quantity: 1 }
-              ],
-              paymentMethod: 'Credit Card',
-              cardLast4: '1234'
-            }]),
-            preSignedUrl: 'https://via.placeholder.com/800x600.png?text=Mock+Receipt+Image'
-          })
-        }
-      ];
-      
-      // Store the mock messages
-      for (const message of mockMessages) {
-        try {
-          let messageBody;
-          try {
-            messageBody = JSON.parse(message.Body);
-          } catch (e) {
-            messageBody = { raw: message.Body };
-          }
-          
-          await storeMessage({
-            type: 'SQS',
-            timestamp: new Date().toISOString(),
-            data: messageBody,
-            messageId: message.MessageId
-          });
-          
-          console.log(`Stored mock message ${message.MessageId}`);
-        } catch (messageError) {
-          console.error('Error processing mock SQS message:', messageError);
-        }
-      }
-      
-      return res.json(mockMessages);
-    }
-    
+  
     // If we have a valid AWS connection (either via profile or credentials), use the real SQS service
     console.log('Using real SQS service');
     const messages = await pollSQSMessages();
@@ -405,7 +338,10 @@ app.post('/api/sns', bodyParser.json(), async (req, res) => {
     
     if(message.userId === "1234") {
         console.log('Fail for test SNS DLQ');
-        res.status(500).send('Error for test DLQ');
+      // Return a 500 status to force SNS to retry
+      // This will eventually send the message to a Dead Letter Queue (DLQ) if configured
+      console.log('Deliberately failing this message to test SNS DLQ');
+      return res.status(500).send('Deliberately failing this message for SNS DLQ testing');
     }
 
     // Store all SNS messages for display regardless of type
