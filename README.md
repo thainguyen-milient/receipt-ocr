@@ -82,6 +82,26 @@ A Node.js Express application that receives AWS SNS notifications, automatically
 3. Ensure your AWS credentials have permission to receive messages from the queue
 4. Use the SQS pull button in the UI to manually retrieve messages from the queue
 
+### AWS Credentials
+
+This application supports two types of AWS credentials:
+
+#### Standard Credentials
+```
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
+```
+
+#### Temporary Credentials
+If you're using temporary credentials (from AWS STS, IAM roles, or AWS SSO), you'll need all three:
+```
+AWS_ACCESS_KEY_ID=your_temporary_access_key
+AWS_SECRET_ACCESS_KEY=your_temporary_secret_key
+AWS_SESSION_TOKEN=your_session_token
+```
+
+**Important**: Temporary credentials expire after a set period (typically 1-36 hours). When you see the error "The security token included in the request is invalid", you need to refresh your credentials.
+
 ## Testing SQS Functionality
 
 1. To test sending a message to your SQS queue, use the included `test-sqs.js` script:

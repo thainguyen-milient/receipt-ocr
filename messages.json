@@ -16,5 +16,56 @@
       "receiptSource": "api"
     },
     "messageId": "bea65f4c-3fc0-4c92-bf68-014101b7e4a0"
+  },
+  {
+    "type": "SQS",
+    "timestamp": "2025-08-27T07:49:46.414Z",
+    "data": {
+      "s3Key": "receipts/mock-receipt-123.jpg",
+      "s3Bucket": "mock-receipt-bucket",
+      "fileName": "mock-receipt-123.jpg",
+      "customerId": "customer-456",
+      "userId": "user-789",
+      "productName": "milient-test-product",
+      "success": true,
+      "message": "Mock receipt processed successfully",
+      "receiptData": "[{\"merchantName\":\"Mock Coffee Shop\",\"merchantAddress\":\"123 Mock Street\\nMock City, MC 12345\",\"merchantPhoneNumber\":\"555-123-4567\",\"date\":\"2025-08-27\",\"time\":\"10:00 AM\",\"total\":12.99,\"currency\":\"USD\",\"items\":[{\"name\":\"Coffee\",\"price\":4.99,\"quantity\":1},{\"name\":\"Sandwich\",\"price\":8,\"quantity\":1}],\"paymentMethod\":\"Credit Card\",\"cardLast4\":\"1234\"}]",
+      "preSignedUrl": "https://via.placeholder.com/800x600.png?text=Mock+Receipt+Image"
+    },
+    "messageId": "mock-msg-1756280986414"
+  },
+  {
+    "type": "SQS",
+    "timestamp": "2025-08-27T07:49:50.448Z",
+    "data": {
+      "s3Key": "receipts/mock-receipt-123.jpg",
+      "s3Bucket": "mock-receipt-bucket",
+      "fileName": "mock-receipt-123.jpg",
+      "customerId": "customer-456",
+      "userId": "user-789",
+      "productName": "milient-test-product",
+      "success": true,
+      "message": "Mock receipt processed successfully",
+      "receiptData": "[{\"merchantName\":\"Mock Coffee Shop\",\"merchantAddress\":\"123 Mock Street\\nMock City, MC 12345\",\"merchantPhoneNumber\":\"555-123-4567\",\"date\":\"2025-08-27\",\"time\":\"10:00 AM\",\"total\":12.99,\"currency\":\"USD\",\"items\":[{\"name\":\"Coffee\",\"price\":4.99,\"quantity\":1},{\"name\":\"Sandwich\",\"price\":8,\"quantity\":1}],\"paymentMethod\":\"Credit Card\",\"cardLast4\":\"1234\"}]",
+      "preSignedUrl": "https://via.placeholder.com/800x600.png?text=Mock+Receipt+Image"
+    },
+    "messageId": "mock-msg-1756280990448"
+  },
+  {
+    "type": "SQS",
+    "timestamp": "2025-08-27T07:50:15.226Z",
+    "data": {
+      "s3Key": "receipts/mock-receipt-123.jpg",
+      "s3Bucket": "mock-receipt-bucket",
+      "fileName": "mock-receipt-123.jpg",
+      "customerId": "customer-456",
+      "userId": "user-789",
+      "productName": "milient-test-product",
+      "success": true,
+      "message": "Mock receipt processed successfully",
+      "receiptData": "[{\"merchantName\":\"Mock Coffee Shop\",\"merchantAddress\":\"123 Mock Street\\nMock City, MC 12345\",\"merchantPhoneNumber\":\"555-123-4567\",\"date\":\"2025-08-27\",\"time\":\"10:00 AM\",\"total\":12.99,\"currency\":\"USD\",\"items\":[{\"name\":\"Coffee\",\"price\":4.99,\"quantity\":1},{\"name\":\"Sandwich\",\"price\":8,\"quantity\":1}],\"paymentMethod\":\"Credit Card\",\"cardLast4\":\"1234\"}]",
+      "preSignedUrl": "https://via.placeholder.com/800x600.png?text=Mock+Receipt+Image"
+    },
+    "messageId": "mock-msg-1756281015226"
   }
 ]

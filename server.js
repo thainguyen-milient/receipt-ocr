@@ -27,11 +27,17 @@ const upload = multer({
 
 // Configure AWS SDK - handle both local development and Vercel environment
 if (process.env.NODE_ENV === 'production') {
+  console.log('Configuring AWS SDK for production environment');
   // In production (Vercel), use environment variables for AWS credentials
   AWS.config.update({
+    region: process.env.AWS_REGION || 'eu-north-1'
+  });
+} else {
+  // In local development, use profile credentials
+  console.log('Configuring AWS SDK with profile authentication');
+  AWS.config.update({
     region: process.env.AWS_REGION || 'eu-north-1',
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+    credentials: new AWS.SharedIniFileCredentials({ profile: '074993326121_DeveloperAccess' })
   });
 }
 
@@ -45,6 +51,16 @@ async function checkSQSConnection() {
     // Check if SQS queue URL is configured
     if (!process.env.SQS_QUEUE_URL) {
       console.warn('⚠️ SQS_QUEUE_URL not configured. SQS functionality will be limited to mock data.');
+      return false;
+    }
+    
+    // In development environment, we're using profile authentication
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Using AWS profile authentication:', process.env.AWS_PROFILE || 'default');
+    } 
+    // In production, check if AWS credentials are configured
+    else if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+      console.warn('⚠️ AWS credentials not configured in production. SQS functionality will be limited to mock data.');
       return false;
     }
     
@@ -65,8 +81,20 @@ async function checkSQSConnection() {
     }
   } catch (error) {
     console.error('❌ AWS SQS connection failed:', error.message);
-    if (error.code === 'CredentialsError') {
-      console.error('❌ AWS credentials are missing or invalid');
+    if (error.code === 'CredentialsError' || error.code === 'InvalidClientTokenId') {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('❌ AWS profile authentication failed. Check that the profile exists in your AWS credentials file.');
+        console.error('❌ Current profile:', process.env.AWS_PROFILE || 'default');
+        console.error('❌ Verify your ~/.aws/credentials file contains this profile.');
+      } else {
+        console.error('❌ AWS credentials are missing or invalid');
+      }
+    } else if (error.message && error.message.includes('security token')) {
+      console.error('❌ AWS temporary security token has expired. Please refresh your AWS credentials.');
+      console.error('❌ For temporary credentials, you need to update ACCESS_KEY_ID, SECRET_ACCESS_KEY, and SESSION_TOKEN');
+    } else if (error.code === 'ProfileNotFound') {
+      console.error('❌ AWS profile not found:', process.env.AWS_PROFILE || 'default');
+      console.error('❌ Check your ~/.aws/credentials file and make sure the profile exists.');
     } else if (error.code === 'AWS.SimpleQueueService.NonExistentQueue') {
       console.error('❌ SQS queue does not exist:', process.env.SQS_QUEUE_URL);
     } else if (error.code === 'NetworkingError') {
@@ -302,9 +330,12 @@ app.get('/api/sqs/poll', async (req, res) => {
   try {
     console.log('SQS poll request received');
     
-    // Check if we should use mock data (no AWS credentials, failed connection, or in development)
-    if (!sqsConnected || !process.env.AWS_ACCESS_KEY_ID || process.env.NODE_ENV === 'development') {
-      console.log('Using mock SQS data (connection status: ' + (sqsConnected ? 'connected' : 'not connected') + ')');
+    // First check SQS connection
+    const sqsConnected = await checkSQSConnection();
+    
+    // Check if we should use mock data (failed connection or in development without profile)
+    if (!sqsConnected) {
+      console.log('Using mock SQS data (connection status: not connected)');
       
       // Define mock messages for testing
       const mockMessages = [
@@ -366,7 +397,8 @@ app.get('/api/sqs/poll', async (req, res) => {
       return res.json(mockMessages);
     }
     
-    // If we have AWS credentials, use the real SQS service
+    // If we have a valid AWS connection (either via profile or credentials), use the real SQS service
+    console.log('Using real SQS service');
     const messages = await pollSQSMessages();
     res.json(messages);
   } catch (error) {
@@ -484,7 +516,10 @@ if (process.env.NODE_ENV !== 'production') {
     // Check SQS connection in production environment
     console.log('\n=== AWS SQS CONNECTION CHECK (PRODUCTION) ===');
     const sqsConnected = await checkSQSConnection();
-    console.log('=== SQS CONNECTION STATUS: ' + (sqsConnected ? 'CONNECTED ✅' : 'NOT CONNECTED ❌') + ' ===\n');
+   console.log('=== SQS CONNECTION STATUS: ' + (sqsConnected ? 'CONNECTED ✅' : 'NOT CONNECTED ❌') + ' ===\n');
+       app.listen(port, () => {
+      console.log(`Server running on port ${port}`);
+    });
   });
 }
 
