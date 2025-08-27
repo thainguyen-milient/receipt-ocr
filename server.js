@@ -251,43 +251,28 @@ async function pollSQSMessages() {
   }
 }
 
-// Store messages for display with file persistence
+// Store messages in memory only
 let messages = [];
-const messagesFilePath = path.join(__dirname, 'messages.json');
 
-// Load messages from file on startup
+// Initialize empty messages array
 async function loadMessages() {
-  try {
-    if (fs.existsSync(messagesFilePath)) {
-      const data = await fsPromises.readFile(messagesFilePath, 'utf8');
-      messages = JSON.parse(data);
-      console.log(`Loaded ${messages.length} messages from storage`);
-    } else {
-      console.log('No messages file found, starting with empty messages array');
-      messages = [];
-    }
-  } catch (error) {
-    console.error('Error loading messages from file:', error);
-    messages = [];
-  }
+  console.log('Initializing empty messages array');
+  messages = [];
 }
 
-// Save messages to file
+// No-op function as we're not saving messages to file anymore
 async function saveMessages() {
-  try {
-    await fsPromises.writeFile(messagesFilePath, JSON.stringify(messages, null, 2));
-  } catch (error) {
-    console.error('Error saving messages to file:', error);
-  }
+  // Messages are kept in memory only
+  return;
 }
 
-// Store message in memory and persist to file
+// Store message in memory only
 async function storeMessage(message) {
   messages.push(message);
   if (messages.length > 10) { // Keep only last 10 messages
     messages.shift();
   }
-  await saveMessages();
+  // No need to call saveMessages() as we're not persisting to file
 }
 
 // Verify SNS message signature (best practice for production)
@@ -419,6 +404,7 @@ app.post('/api/sns', bodyParser.json(), async (req, res) => {
     console.log('Received SNS message:', message);
     
     if(message.userId === "1234") {
+        console.log('Fail for test SNS DLQ');
         res.status(500).send('Error for test DLQ');
     }
 
