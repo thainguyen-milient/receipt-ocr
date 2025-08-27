@@ -1131,9 +1131,6 @@
                         }
                     });
                     
-                    // Update SQS badge
-                    updateSQSBadge();
-                    
                     // Show success toast
                     showToast(`Retrieved ${messages.length} SQS message(s)`, 'success');
                 } else {
@@ -1159,16 +1156,6 @@
             }
         }
         
-        // Update SQS badge
-        function updateSQSBadge() {
-            const badge = document.getElementById('sqsMessageBadge');
-            if (sqsMessageCount > 0) {
-                badge.textContent = sqsMessageCount > 9 ? '9+' : sqsMessageCount;
-                badge.style.display = 'flex';
-            } else {
-                badge.style.display = 'none';
-            }
-        }
         
         // Add event listener for SQS pull button
         document.getElementById('sqsPullButton').addEventListener('click', pullSQSMessages);
