@@ -1099,30 +1099,6 @@
                                 messageData = { raw: message.Body };
                             }
                             
-                            // Create message object
-                            const sqsMessage = {
-                                type: 'SQS',
-                                timestamp: new Date().toISOString(),
-                                data: messageData,
-                                messageId: messageId
-                            };
-                            
-                            // Add to notifications
-                            const notification = {
-                                id: messageId,
-                                message: sqsMessage,
-                                timestamp: new Date(),
-                                read: false
-                            };
-                            notifications.unshift(notification);
-                            
-                            // Show notification
-                            showNotification(notification);
-                            
-                            // Update badge count
-                            unreadCount++;
-                            updateNotificationBadge();
-                            
                             // Display in SQS messages container
                             displayMessage(sqsMessage, 'sqsMessagesContainer');
                             
