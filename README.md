@@ -1,4 +1,4 @@
-# AWS SNS Message Receiver
+# AWS SNS & SQS Message Receiver
 
 A Node.js Express application that receives AWS SNS notifications, automatically confirms subscriptions, and displays messages in a web interface.
 
@@ -7,8 +7,10 @@ A Node.js Express application that receives AWS SNS notifications, automatically
 - Receives SNS notifications via public endpoint
 - Automatically confirms SNS topic subscriptions
 - Displays SNS messages in real-time
+- Supports SQS message polling with manual trigger
+- Displays SQS messages in a dedicated section
 - Supports file uploads with receipt processing
-- Beautiful UI with notification system
+- Beautiful UI with notification system for both SNS and SQS messages
 
 ## Local Development
 
@@ -20,6 +22,9 @@ A Node.js Express application that receives AWS SNS notifications, automatically
 2. Create a `.env` file with the following variables:
    ```
    AWS_REGION=your-aws-region
+   AWS_ACCESS_KEY_ID=your-aws-access-key-id
+   AWS_SECRET_ACCESS_KEY=your-aws-secret-access-key
+   SQS_QUEUE_URL=your-sqs-queue-url
    API_ENDPOINT=your-api-endpoint
    API_AUTH_TOKEN=your-auth-token
    PRODUCT_NAME=your-product-name
@@ -53,6 +58,7 @@ A Node.js Express application that receives AWS SNS notifications, automatically
    - `AWS_REGION`
    - `AWS_ACCESS_KEY_ID`
    - `AWS_SECRET_ACCESS_KEY`
+   - `SQS_QUEUE_URL`
    - `API_ENDPOINT`
    - `API_AUTH_TOKEN`
    - `PRODUCT_NAME`
@@ -69,9 +75,31 @@ A Node.js Express application that receives AWS SNS notifications, automatically
    - Protocol: HTTPS
    - Endpoint: Your Vercel URL + `/api/sns`
 
+## AWS SQS Configuration
+
+1. Create an SQS queue in AWS console
+2. Set the queue URL in your environment variables as `SQS_QUEUE_URL`
+3. Ensure your AWS credentials have permission to receive messages from the queue
+4. Use the SQS pull button in the UI to manually retrieve messages from the queue
+
+## Testing SQS Functionality
+
+1. To test sending a message to your SQS queue, use the included `test-sqs.js` script:
+   ```
+   node test-sqs.js
+   ```
+
+2. For development without AWS credentials, the application includes a mock SQS endpoint that returns sample messages
+
+3. Click the SQS pull button (cloud download icon) under the notification bell to retrieve messages
+
+4. SQS messages will appear in the dedicated "SQS Messages" section and in the notifications panel
+
 ## Project Structure
 
 - `server.js` - Main application entry point
 - `public/` - Static assets and frontend code
 - `uploads/` - Temporary storage for file uploads
 - `vercel.json` - Vercel deployment configuration
+- `test-sqs.js` - Utility script for testing SQS message sending
+- `messages.json` - Storage file for received messages

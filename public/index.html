@@ -143,6 +143,12 @@
         <i class="fas fa-bell"></i>
         <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
     </div>
+    
+    <!-- SQS Pull Button -->
+    <div class="notification-bell" id="sqsPullButton" style="top: 80px;">
+        <i class="fas fa-cloud-download-alt"></i>
+        <span class="notification-badge" id="sqsMessageBadge" style="display: none;">0</span>
+    </div>
 
     <!-- Notification Container -->
     <div class="notification-container" id="notificationContainer">
@@ -210,6 +216,11 @@
         <div class="messages-section">
             <h3>SNS Messages</h3>
             <div id="messagesContainer"></div>
+        </div>
+        
+        <div class="messages-section mt-4">
+            <h3>SQS Messages</h3>
+            <div id="sqsMessagesContainer"></div>
         </div>
     </div>
 
@@ -309,14 +320,72 @@
             }
         });
 
-        // Function to display SNS messages
-        function displayMessage(message) {
+        // Function to display messages
+        function displayMessage(message, container = 'messagesContainer') {
             const messageCard = document.createElement('div');
             messageCard.className = 'message-card';
             
             // Display message
-            // Determine if it's an SNS message or legacy format
-            if (message.type === 'SNS') {
+            // Determine message type
+            if (message.type === 'SQS') {
+                // Handle SQS message format
+                const data = message.data || {};
+                const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleString() : 'N/A';
+                
+                let html = `
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-cloud-download-alt me-2"></i>SQS Message</h5>
+                            <small>${timestamp}</small>
+                        </div>
+                        <div class="card-body">
+                `;
+                
+                // If message.data has receipt properties
+                if (data.s3Key || data.fileName || data.customerId) {
+                    html += `
+                        <p><strong>S3 Key:</strong> ${data.s3Key || 'N/A'}</p>
+                        <p><strong>S3 Bucket:</strong> ${data.s3Bucket || 'N/A'}</p>
+                        <p><strong>File Name:</strong> ${data.fileName || 'N/A'}</p>
+                        <p><strong>Customer ID:</strong> ${data.customerId || 'N/A'}</p>
+                        <p><strong>User ID:</strong> ${data.userId || 'N/A'}</p>
+                        <p><strong>Product Name:</strong> ${data.productName || 'N/A'}</p>
+                        <p><strong>Success:</strong> ${data.success ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-danger">No</span>'}</p>
+                        <p><strong>Message:</strong> ${data.message || 'N/A'}</p>
+                    `;
+                } else {
+                    // Display as JSON for other types of data
+                    html += `<pre class="bg-light p-3 rounded">${JSON.stringify(data, null, 2)}</pre>`;
+                }
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+                
+                // Check for receipt data in the SQS message
+                if (data.receiptData) {
+                    try {
+                        const receiptData = typeof data.receiptData === 'string' 
+                            ? JSON.parse(data.receiptData) 
+                            : data.receiptData;
+                            
+                        if (Array.isArray(receiptData) && receiptData.length > 0) {
+                            html += renderReceiptData(receiptData);
+                        }
+                    } catch (e) {
+                        console.error('Error parsing receipt data:', e);
+                        html += `<p><strong>Receipt Data (raw):</strong> ${data.receiptData}</p>`;
+                    }
+                }
+                
+                // Add image if available
+                if (data.preSignedUrl) {
+                    html += renderReceiptImage(data.preSignedUrl);
+                }
+                
+                messageCard.innerHTML = html;
+            } else if (message.type === 'SNS') {
                 // Handle SNS message format
                 const data = message.data || {};
                 const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleString() : 'N/A';
@@ -407,7 +476,7 @@
                 messageCard.innerHTML = html;
             }
             
-            document.getElementById('messagesContainer').prepend(messageCard);
+            document.getElementById(container).prepend(messageCard);
         }
         
         // Helper function to render receipt data
@@ -477,8 +546,6 @@
                     </div>
                 </div>
             `;
-            
-            document.getElementById('messagesContainer').prepend(messageCard);
         }
 
         // Store for messages we've already seen
@@ -563,7 +630,24 @@
             let headerBg = 'bg-primary';
             let icon = '';
             
-            if (notification.message.type === 'SNS') {
+            if (notification.message.type === 'SQS') {
+                // It's an SQS message
+                title = 'New SQS Message';
+                icon = '<i class="fas fa-cloud-download-alt me-2 text-primary"></i>';
+                headerBg = 'bg-primary text-white';
+                
+                const data = notification.message.data || {};
+                
+                if (data.fileName) {
+                    message = `Receipt from ${data.fileName || data.customerId || 'Unknown'}`;
+                } else if (data.message) {
+                    message = data.message;
+                } else if (data.raw) {
+                    message = `Raw message: ${data.raw.substring(0, 50)}${data.raw.length > 50 ? '...' : ''}`;
+                } else {
+                    message = 'New SQS message received';
+                }
+            } else if (notification.message.type === 'SNS') {
                 // It's an SNS message
                 title = 'New SNS Message';
                 icon = '<i class="fas fa-cloud me-2 text-success"></i>';
@@ -638,7 +722,21 @@
                 let title = 'Unknown';
                 let icon = '';
                 
-                if (notification.message.type === 'SNS') {
+                if (notification.message.type === 'SQS') {
+                    // SQS message
+                    icon = '<i class="fas fa-cloud-download-alt me-2 text-primary"></i>';
+                    
+                    const data = notification.message.data || {};
+                    if (data.fileName) {
+                        title = data.fileName || 'SQS Message';
+                    } else if (data.message) {
+                        title = 'SQS: ' + data.message.substring(0, 20) + (data.message.length > 20 ? '...' : '');
+                    } else if (data.raw) {
+                        title = 'SQS Raw Message';
+                    } else {
+                        title = 'SQS Message';
+                    }
+                } else if (notification.message.type === 'SNS') {
                     // SNS message
                     icon = '<i class="fas fa-cloud me-2 text-success"></i>';
                     
@@ -698,7 +796,77 @@
             const message = notification.message;
             let html = '';
             
-            if (message.type === 'SNS') {
+            if (message.type === 'SQS') {
+                // SQS message format
+                const data = message.data || {};
+                const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleString() : 'N/A';
+                
+                html = `
+                    <h3>SQS Message Details</h3>
+                    <div class="card mb-3">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-cloud-download-alt me-2"></i>SQS Message</h5>
+                            <small>${timestamp}</small>
+                        </div>
+                        <div class="card-body">
+                `;
+                
+                // Add SQS message details
+                if (data.s3Key || data.fileName || data.customerId) {
+                    html += `
+                        <p><strong>S3 Key:</strong> ${data.s3Key || 'N/A'}</p>
+                        <p><strong>S3 Bucket:</strong> ${data.s3Bucket || 'N/A'}</p>
+                        <p><strong>File Name:</strong> ${data.fileName || 'N/A'}</p>
+                        <p><strong>Customer ID:</strong> ${data.customerId || 'N/A'}</p>
+                        <p><strong>User ID:</strong> ${data.userId || 'N/A'}</p>
+                        <p><strong>Product Name:</strong> ${data.productName || 'N/A'}</p>
+                        <p><strong>Success:</strong> ${data.success ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-danger">No</span>'}</p>
+                        <p><strong>Message:</strong> ${data.message || 'N/A'}</p>
+                    `;
+                } else if (data.raw) {
+                    html += `
+                        <p><strong>Raw Message:</strong></p>
+                        <pre class="bg-light p-3 rounded">${data.raw}</pre>
+                    `;
+                } else {
+                    // Display as JSON
+                    html += `
+                        <h6 class="mt-3 mb-2">Message Content:</h6>
+                        <pre class="bg-light p-3 rounded">${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+                
+                // Check for receipt data
+                if (data.receiptData) {
+                    try {
+                        const receiptData = typeof data.receiptData === 'string' 
+                            ? JSON.parse(data.receiptData) 
+                            : data.receiptData;
+                            
+                        if (Array.isArray(receiptData) && receiptData.length > 0) {
+                            html += renderReceiptData(receiptData);
+                        }
+                    } catch (e) {
+                        console.error('Error parsing receipt data:', e);
+                        html += `<p><strong>Receipt Data (raw):</strong> ${data.receiptData}</p>`;
+                    }
+                }
+                
+                // Add image if available
+                if (data.preSignedUrl) {
+                    html += `
+                        <h4 class="mt-4">Receipt Image</h4>
+                        <div class="text-center">
+                            <img src="${data.preSignedUrl}" alt="Receipt" class="img-fluid" style="max-height: 500px;">
+                        </div>
+                    `;
+                }
+            } else if (message.type === 'SNS') {
                 // SNS message format
                 const data = message.data || {};
                 const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleString() : 'N/A';
@@ -892,8 +1060,120 @@
             }
         });
 
-        // Start polling
-        setInterval(pollMessages, 10000); // Poll every 10 seconds
+        // SQS Messages handling
+        let sqsMessageCount = 0;
+        
+        // Function to pull SQS messages
+        async function pullSQSMessages() {
+            try {
+                const sqsPullButton = document.getElementById('sqsPullButton');
+                const sqsMessageBadge = document.getElementById('sqsMessageBadge');
+                
+                // Add loading indicator
+                sqsPullButton.classList.add('disabled');
+                sqsPullButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                
+                // Call the API endpoint
+                const response = await fetch('/api/sqs/poll');
+                const messages = await response.json();
+                
+                // Process messages
+                if (messages && messages.length > 0) {
+                    messages.forEach(message => {
+                        // Generate a unique ID for the message
+                        const messageId = 'sqs-' + (message.MessageId || Date.now());
+                        
+                        // If this is a new message we haven't seen before
+                        if (!seenMessageIds.has(messageId)) {
+                            console.log('New SQS message received');
+                            
+                            // Mark as seen
+                            seenMessageIds.add(messageId);
+                            
+                            // Parse message body
+                            let messageData;
+                            try {
+                                messageData = JSON.parse(message.Body);
+                            } catch (e) {
+                                messageData = { raw: message.Body };
+                            }
+                            
+                            // Create message object
+                            const sqsMessage = {
+                                type: 'SQS',
+                                timestamp: new Date().toISOString(),
+                                data: messageData,
+                                messageId: messageId
+                            };
+                            
+                            // Add to notifications
+                            const notification = {
+                                id: messageId,
+                                message: sqsMessage,
+                                timestamp: new Date(),
+                                read: false
+                            };
+                            notifications.unshift(notification);
+                            
+                            // Show notification
+                            showNotification(notification);
+                            
+                            // Update badge count
+                            unreadCount++;
+                            updateNotificationBadge();
+                            
+                            // Display in SQS messages container
+                            displayMessage(sqsMessage, 'sqsMessagesContainer');
+                            
+                            // Increment SQS message count
+                            sqsMessageCount++;
+                        }
+                    });
+                    
+                    // Update SQS badge
+                    updateSQSBadge();
+                    
+                    // Show success toast
+                    showToast(`Retrieved ${messages.length} SQS message(s)`, 'success');
+                } else {
+                    // Show info toast
+                    showToast('No new SQS messages available', 'info');
+                }
+                
+                // Restore button
+                sqsPullButton.classList.remove('disabled');
+                sqsPullButton.innerHTML = '<i class="fas fa-cloud-download-alt"></i>';
+                
+                // Update notification list
+                updateNotificationList();
+            } catch (error) {
+                console.error('Error pulling SQS messages:', error);
+                
+                // Show error toast
+                showToast('Error retrieving SQS messages', 'danger');
+                
+                // Restore button
+                sqsPullButton.classList.remove('disabled');
+                sqsPullButton.innerHTML = '<i class="fas fa-cloud-download-alt"></i>';
+            }
+        }
+        
+        // Update SQS badge
+        function updateSQSBadge() {
+            const badge = document.getElementById('sqsMessageBadge');
+            if (sqsMessageCount > 0) {
+                badge.textContent = sqsMessageCount > 9 ? '9+' : sqsMessageCount;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+        
+        // Add event listener for SQS pull button
+        document.getElementById('sqsPullButton').addEventListener('click', pullSQSMessages);
+        
+        // // Start polling
+        // setInterval(pollMessages, 10000); // Poll every 10 seconds
     </script>
 </body>
 </html>

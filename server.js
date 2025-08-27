@@ -33,12 +33,6 @@ if (process.env.NODE_ENV === 'production') {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
   });
-} else {
-  // In local development, use profile credentials
-  AWS.config.update({
-    region: process.env.AWS_REGION || 'eu-north-1',
-    credentials: new AWS.SharedIniFileCredentials({ profile: '074993326121_LocalDevelopmentAccess' })
-  });
 }
 
 const sqs = new AWS.SQS();
@@ -125,7 +119,70 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
-// SQS function has been removed
+// SQS polling function
+async function pollSQSMessages() {
+  try {
+    // SQS queue URL should be in environment variables
+    const queueUrl = process.env.SQS_QUEUE_URL;
+    
+    if (!queueUrl) {
+      console.error('SQS_QUEUE_URL environment variable is not set');
+      return [];
+    }
+    
+    const params = {
+      QueueUrl: queueUrl,
+      MaxNumberOfMessages: 10,
+      VisibilityTimeout: 20,
+      WaitTimeSeconds: 0
+    };
+    
+    const data = await sqs.receiveMessage(params).promise();
+    
+    if (!data.Messages || data.Messages.length === 0) {
+      console.log('No SQS messages available');
+      return [];
+    }
+    
+    console.log(`Received ${data.Messages.length} messages from SQS`);
+    
+    // Process and store each message
+    for (const message of data.Messages) {
+      try {
+        // Parse message body
+        let messageBody;
+        try {
+          messageBody = JSON.parse(message.Body);
+        } catch (e) {
+          messageBody = { raw: message.Body };
+        }
+        
+        // Store the message
+        await storeMessage({
+          type: 'SQS',
+          timestamp: new Date().toISOString(),
+          data: messageBody,
+          messageId: message.MessageId
+        });
+        
+        // Delete the message from the queue after processing
+        await sqs.deleteMessage({
+          QueueUrl: queueUrl,
+          ReceiptHandle: message.ReceiptHandle
+        }).promise();
+        
+        console.log(`Deleted message ${message.MessageId} from queue`);
+      } catch (messageError) {
+        console.error('Error processing SQS message:', messageError);
+      }
+    }
+    
+    return data.Messages;
+  } catch (error) {
+    console.error('Error polling SQS:', error);
+    return [];
+  }
+}
 
 // Store messages for display with file persistence
 let messages = [];
@@ -201,7 +258,23 @@ async function makeApiRequest(data, authToken, productName) {
   }
 }
 
-// SQS polling has been removed
+// SQS polling endpoint
+app.get('/api/sqs/poll', async (req, res) => {
+  try {
+    // Check if we should use mock data (no AWS credentials or in development)
+    if (!process.env.AWS_ACCESS_KEY_ID || process.env.NODE_ENV === 'development') {
+     
+      return res.json(mockMessages);
+    }
+    
+    // If we have AWS credentials, use the real SQS service
+    const messages = await pollSQSMessages();
+    res.json(messages);
+  } catch (error) {
+    console.error('Error in SQS polling endpoint:', error);
+    res.status(500).json({ error: 'Failed to poll SQS messages', details: error.message });
+  }
+});
 
 // Messages endpoint
 app.get('/messages', (req, res) => {
@@ -214,6 +287,10 @@ app.post('/api/sns', bodyParser.json(), async (req, res) => {
     const message = req.body;
     console.log('Received SNS message:', message);
     
+    if(message.Message.userId === "1234") {
+        res.status(500).send('Error for test DLQ');
+    }
+
     // Store all SNS messages for display regardless of type
     await storeMessage({
       type: 'SNS',
