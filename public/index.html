@@ -214,14 +214,10 @@
         </div>
 
         <div class="messages-section">
-            <h3>SNS Messages</h3>
+            <h3>Receipt Data</h3>
             <div id="messagesContainer"></div>
         </div>
         
-        <div class="messages-section mt-4">
-            <h3>SQS Messages</h3>
-            <div id="sqsMessagesContainer"></div>
-        </div>
     </div>
 
     <script>
@@ -415,7 +411,6 @@
                         <p><strong>User ID:</strong> ${data.userId || 'N/A'}</p>
                         ` : `
                         <p><strong>Sender:</strong> ${data.sender || 'N/A'}</p>
-                        <p><strong>Receiver:</strong> ${data.receiver || 'N/A'}</p>
                         <p><strong>Sent date:</strong> ${data.sentDate || 'N/A'}</p>`}
                         <p><strong>Message:</strong> ${data.message || 'N/A'}</p>
                     `;
@@ -1100,7 +1095,7 @@
                             }
                             
                             // Display in SQS messages container
-                            displayMessage(sqsMessage, 'sqsMessagesContainer');
+                            displayMessage(sqsMessage, 'messagesContainer');
                             
                             // Increment SQS message count
                             sqsMessageCount++;
