@@ -1,0 +1,7 @@
+{
+  "users": [],
+  "totalResults": 0,
+  "itemsPerPage": 100,
+  "startIndex": 1,
+  "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"]
+}

@@ -16,11 +16,31 @@
       "dest": "/server.js"
     },
     {
+      "src": "/auth/(.*)",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/scim/(.*)",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/login",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/logout",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/callback",
+      "dest": "/server.js"
+    },
+    {
       "src": "/messages",
       "dest": "/server.js"
     },
     {
-      "src": "/(.*\\.(js|css|png|jpg|jpeg|svg|ico|json))",
+      "src": "/(.*\\.(js|css|png|jpg|jpeg|svg|ico|json|webp))",
       "dest": "/public/$1"
     },
     {

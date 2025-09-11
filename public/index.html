@@ -135,9 +135,181 @@
             right: 20px;
             z-index: 1050;
         }
+        
+        /* Authentication UI styles */
+        .auth-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background-color: #fff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .user-name {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .auth-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .login-btn {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .login-btn:hover {
+            background-color: #0056b3;
+            color: white;
+        }
+        
+        .logout-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .logout-btn:hover {
+            background-color: #c82333;
+            color: white;
+        }
+        
+        .profile-btn {
+            background-color: #28a745;
+            color: white;
+            margin-right: 8px;
+        }
+        
+        .profile-btn:hover {
+            background-color: #218838;
+            color: white;
+        }
+        
+        /* Profile Modal styles */
+        .profile-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 2000;
+        }
+        
+        .profile-modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .profile-modal-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .profile-modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .profile-modal-close:hover {
+            color: #000;
+        }
+        
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .profile-field {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .profile-field-label {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .profile-field-value {
+            color: #212529;
+            word-break: break-all;
+        }
+        
+        .profile-avatar-large {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 15px;
+            display: block;
+        }
     </style>
 </head>
 <body>
+    <!-- Authentication Container -->
+    <div class="auth-container" id="authContainer">
+        <div id="loginSection" style="display: none;">
+            <a href="/login" class="auth-btn login-btn">
+                <i class="fas fa-sign-in-alt me-1"></i>Login
+            </a>
+        </div>
+        <div id="userSection" style="display: none;">
+            <div class="user-info">
+                <img id="userAvatar" src="" alt="User Avatar" class="user-avatar" style="display: none;">
+                <span class="user-name">Hello <span id="userName"></span></span>
+            </div>
+            <button class="auth-btn profile-btn" onclick="showProfile()">
+                <i class="fas fa-user me-1"></i>Profile
+            </button>
+            <a href="/logout" class="auth-btn logout-btn">
+                <i class="fas fa-sign-out-alt me-1"></i>Logout
+            </a>
+        </div>
+    </div>
+
     <!-- Notification Bell -->
     <div class="notification-bell" id="notificationBell">
         <i class="fas fa-bell"></i>
@@ -166,6 +338,24 @@
 
     <!-- Toast Container for New Notifications -->
     <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Profile Modal -->
+    <div class="profile-modal" id="profileModal">
+        <div class="profile-modal-content">
+            <div class="profile-modal-header">
+                <h3><i class="fas fa-user me-2"></i>User Profile</h3>
+                <span class="profile-modal-close" onclick="closeProfile()">&times;</span>
+            </div>
+            <div id="profileContent">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p>Loading profile...</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="container">
         <div class="text-center mb-4">
@@ -221,6 +411,163 @@
     </div>
 
     <script>
+        // Authentication state management
+        let currentUser = null;
+        
+        // Check authentication status on page load
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/auth/user');
+                const authData = await response.json();
+                
+                if (authData.isAuthenticated) {
+                    currentUser = authData.user;
+                    showUserSection();
+                } else {
+                    currentUser = null;
+                    showLoginSection();
+                }
+            } catch (error) {
+                console.error('Error checking auth status:', error);
+                showLoginSection();
+            }
+        }
+        
+        function showLoginSection() {
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('userSection').style.display = 'none';
+        }
+        
+        function showUserSection() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('userSection').style.display = 'flex';
+            
+            if (currentUser) {
+                document.getElementById('userName').textContent = currentUser.name || currentUser.email || 'User';
+                
+                if (currentUser.picture) {
+                    const avatar = document.getElementById('userAvatar');
+                    avatar.src = currentUser.picture;
+                    avatar.style.display = 'block';
+                }
+            }
+        }
+        
+        // Initialize auth status when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthStatus();
+        });
+        
+        // Profile functionality
+        async function showProfile() {
+            const modal = document.getElementById('profileModal');
+            const content = document.getElementById('profileContent');
+            
+            // Show modal with loading state
+            modal.style.display = 'block';
+            content.innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p>Loading profile...</p>
+                </div>
+            `;
+            
+            try {
+                const response = await fetch('/auth/profile');
+                const profileData = await response.json();
+                
+                if (response.ok) {
+                    displayProfileData(profileData);
+                } else {
+                    content.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Error loading profile: ${profileData.error || 'Unknown error'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error fetching profile:', error);
+                content.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Failed to load profile. Please try again.
+                    </div>
+                `;
+            }
+        }
+        
+        function displayProfileData(profile) {
+            const content = document.getElementById('profileContent');
+            
+            let html = '<div class="profile-info">';
+            
+            // Add avatar if available
+            if (profile.picture) {
+                html += `<img src="${profile.picture}" alt="Profile Picture" class="profile-avatar-large">`;
+            }
+            
+            // Add profile fields
+            const fields = [
+                { label: 'Name', value: profile.name || 'Not provided' },
+                { label: 'Email', value: profile.email || 'Not provided' },
+                { label: 'Nickname', value: profile.nickname || 'Not provided' },
+                { label: 'User ID', value: profile.sub || 'Not provided' },
+                { label: 'Email Verified', value: profile.email_verified ? 'Yes' : 'No' },
+                { label: 'Last Updated', value: profile.updated_at ? new Date(profile.updated_at).toLocaleString() : 'Not provided' }
+            ];
+            
+            fields.forEach(field => {
+                if (field.value && field.value !== 'Not provided') {
+                    html += `
+                        <div class="profile-field">
+                            <span class="profile-field-label">${field.label}:</span>
+                            <span class="profile-field-value">${field.value}</span>
+                        </div>
+                    `;
+                }
+            });
+            
+            // Add additional profile data if available
+            if (profile.locale) {
+                html += `
+                    <div class="profile-field">
+                        <span class="profile-field-label">Locale:</span>
+                        <span class="profile-field-value">${profile.locale}</span>
+                    </div>
+                `;
+            }
+            
+            // Show raw profile data in a collapsible section
+            html += `
+                <div class="mt-3">
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#rawProfileData" aria-expanded="false">
+                        <i class="fas fa-code me-1"></i>Show Raw Data
+                    </button>
+                    <div class="collapse mt-2" id="rawProfileData">
+                        <pre class="bg-light p-3 rounded" style="font-size: 12px; max-height: 200px; overflow-y: auto;">${JSON.stringify(profile, null, 2)}</pre>
+                    </div>
+                </div>
+            `;
+            
+            html += '</div>';
+            content.innerHTML = html;
+        }
+        
+        function closeProfile() {
+            document.getElementById('profileModal').style.display = 'none';
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('profileModal');
+            if (event.target === modal) {
+                closeProfile();
+            }
+        }
+        
         // Toast notification function
         function showToast(message, type = 'success') {
             const toastContainer = document.getElementById('toastContainer');
