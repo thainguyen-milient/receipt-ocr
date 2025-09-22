@@ -210,6 +210,17 @@
             color: white;
         }
         
+        .switch-btn {
+            background-color: #6f42c1;
+            color: white;
+            margin-right: 8px;
+        }
+        
+        .switch-btn:hover {
+            background-color: #5a32a3;
+            color: white;
+        }
+        
         /* Profile Modal styles */
         .profile-modal {
             display: none;
@@ -292,8 +303,11 @@
     <!-- Authentication Container -->
     <div class="auth-container" id="authContainer">
         <div id="loginSection" style="display: none;">
-            <a href="/login" class="auth-btn login-btn">
+            <a href="/auth/login" class="auth-btn login-btn">
                 <i class="fas fa-sign-in-alt me-1"></i>Login
+            </a>
+            <a href="http://localhost:3002" class="auth-btn switch-btn">
+                <i class="fas fa-exchange-alt me-1"></i>Switch to Pluriell
             </a>
         </div>
         <div id="userSection" style="display: none;">
@@ -304,7 +318,10 @@
             <button class="auth-btn profile-btn" onclick="showProfile()">
                 <i class="fas fa-user me-1"></i>Profile
             </button>
-            <a href="/logout" class="auth-btn logout-btn">
+            <a href="http://localhost:3002" class="auth-btn switch-btn">
+                <i class="fas fa-exchange-alt me-1"></i>Switch to Pluriell
+            </a>
+            <a href="/auth/logout" class="auth-btn logout-btn">
                 <i class="fas fa-sign-out-alt me-1"></i>Logout
             </a>
         </div>
@@ -421,11 +438,14 @@
                 const authData = await response.json();
                 
                 if (authData.isAuthenticated) {
-                    currentUser = authData.user;
+                    // Handle both formats: {user: {...}, isAuthenticated: true} and {isAuthenticated: true, ...userProps}
+                    currentUser = authData.user || authData;
                     showUserSection();
+                    console.log('User authenticated:', currentUser);
                 } else {
                     currentUser = null;
                     showLoginSection();
+                    console.log('User not authenticated');
                 }
             } catch (error) {
                 console.error('Error checking auth status:', error);
@@ -475,18 +495,26 @@
             `;
             
             try {
-                const response = await fetch('/auth/profile');
-                const profileData = await response.json();
+                const response = await fetch('/auth/user');
+                const userData = await response.json();
                 
-                if (response.ok) {
-                    displayProfileData(profileData);
+                if (userData.isAuthenticated && userData.user) {
+                    displayProfileData(userData.user);
                 } else {
-                    content.innerHTML = `
-                        <div class="alert alert-danger">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            Error loading profile: ${profileData.error || 'Unknown error'}
-                        </div>
-                    `;
+                    // Try the old endpoint as fallback
+                    const profileResponse = await fetch('/auth/profile');
+                    const profileData = await profileResponse.json();
+                    
+                    if (profileResponse.ok) {
+                        displayProfileData(profileData);
+                    } else {
+                        content.innerHTML = `
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Error loading profile: ${profileData.error || 'Not authenticated'}
+                            </div>
+                        `;
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching profile:', error);
@@ -513,10 +541,9 @@
             const fields = [
                 { label: 'Name', value: profile.name || 'Not provided' },
                 { label: 'Email', value: profile.email || 'Not provided' },
-                { label: 'Nickname', value: profile.nickname || 'Not provided' },
                 { label: 'User ID', value: profile.sub || 'Not provided' },
-                { label: 'Email Verified', value: profile.email_verified ? 'Yes' : 'No' },
-                { label: 'Last Updated', value: profile.updated_at ? new Date(profile.updated_at).toLocaleString() : 'Not provided' }
+                { label: 'Issuer', value: profile.iss || 'Not provided' },
+                { label: 'Authentication Source', value: profile.source || 'Not provided' }
             ];
             
             fields.forEach(field => {
@@ -530,12 +557,47 @@
                 }
             });
             
-            // Add additional profile data if available
-            if (profile.locale) {
+            // Add token expiration if available
+            if (profile.exp) {
+                const expirationDate = new Date(profile.exp * 1000);
                 html += `
                     <div class="profile-field">
-                        <span class="profile-field-label">Locale:</span>
-                        <span class="profile-field-value">${profile.locale}</span>
+                        <span class="profile-field-label">Token Expires:</span>
+                        <span class="profile-field-value">${expirationDate.toLocaleString()}</span>
+                    </div>
+                `;
+            }
+            
+            // Add roles if available
+            if (profile.roles && profile.roles.length > 0) {
+                html += `
+                    <div class="profile-field">
+                        <span class="profile-field-label">Roles:</span>
+                        <span class="profile-field-value">${profile.roles.join(', ') || 'None'}</span>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="profile-field">
+                        <span class="profile-field-label">Roles:</span>
+                        <span class="profile-field-value">None</span>
+                    </div>
+                `;
+            }
+            
+            // Add permissions if available
+            if (profile.permissions && profile.permissions.length > 0) {
+                html += `
+                    <div class="profile-field">
+                        <span class="profile-field-label">Permissions:</span>
+                        <span class="profile-field-value">${profile.permissions.join(', ') || 'None'}</span>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="profile-field">
+                        <span class="profile-field-label">Permissions:</span>
+                        <span class="profile-field-value">None</span>
                     </div>
                 `;
             }

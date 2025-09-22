@@ -11,9 +11,13 @@ const { auth } = require('express-openid-connect');
 const session = require('express-session');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
+const cookieParser = require('cookie-parser');
+
+// Import routes
+const authRoutes = require('./routes/auth');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
 // Configure multer for file upload - make it compatible with serverless environment
 let uploadDir = 'uploads/';
@@ -128,25 +132,34 @@ const isAuth0Configured = process.env.AUTH0_SECRET &&
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
+app.use(cookieParser());
 app.use(express.static('public'));
 app.set('view engine', 'ejs');
 
-// Session middleware (required for Auth0)
+// Session middleware (required for Auth0 and SSO)
 app.use(session({
-  secret: process.env.AUTH0_SECRET || 'fallback-secret-key',
+  secret: process.env.SESSION_SECRET || process.env.AUTH0_SECRET || 'fallback-secret-key',
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: false } // Set to true in production with HTTPS
+  cookie: { 
+    secure: process.env.NODE_ENV === 'production', // Set to true in production with HTTPS
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
 }));
 
-// Auth0 middleware (only if properly configured)
-if (isAuth0Configured) {
-  console.log('✅ Auth0 is configured - enabling authentication');
+// Auth0 middleware (only if properly configured and SSO Gateway is not configured)
+if (isAuth0Configured && !process.env.SSO_GATEWAY_URL) {
+  console.log('✅ Auth0 is configured - enabling direct Auth0 authentication');
   app.use(auth(config));
+} else if (process.env.SSO_GATEWAY_URL) {
+  console.log('✅ SSO Gateway is configured - using SSO Gateway for authentication');
 } else {
-  console.log('⚠️ Auth0 not configured - running without authentication');
-  console.log('Please update your .env file with proper Auth0 credentials to enable authentication');
+  console.log('⚠️ Neither Auth0 nor SSO Gateway configured - running without authentication');
+  console.log('Please update your .env file with proper authentication credentials');
 }
+
+// Use auth routes
+app.use('/auth', authRoutes);
 
 // User management functions
 function loadUsers() {
@@ -181,34 +194,128 @@ function findUserByEmail(email) {
 
 // Authentication routes
 app.get('/auth/user', (req, res) => {
-  if (!isAuth0Configured) {
-    return res.json({ isAuthenticated: false, message: 'Auth0 not configured' });
+  // Check for JWT token authentication
+  const token = req.cookies.access_token;
+  let isTokenAuthenticated = false;
+  let tokenUser = null;
+  
+  if (token) {
+    try {
+      tokenUser = jwt.verify(token, process.env.JWT_SECRET);
+      isTokenAuthenticated = true;
+      
+      return res.json({
+        isAuthenticated: true,
+        user: {
+          name: tokenUser.name,
+          email: tokenUser.email,
+          picture: tokenUser.picture,
+          source: 'jwt'
+        }
+      });
+    } catch (error) {
+      console.error('Token verification failed:', error);
+    }
   }
   
-  if (req.oidc && req.oidc.isAuthenticated()) {
-    res.json({
+  // Check for session authentication
+  if (req.session && req.session.user) {
+    return res.json({
+      isAuthenticated: true,
+      user: {
+        name: req.session.user.name,
+        email: req.session.user.email,
+        picture: req.session.user.picture,
+        source: 'session'
+      }
+    });
+  }
+  
+  // Check for Auth0 authentication
+  if (isAuth0Configured && req.oidc && req.oidc.isAuthenticated()) {
+    return res.json({
       isAuthenticated: true,
       user: {
         name: req.oidc.user.name,
         email: req.oidc.user.email,
-        picture: req.oidc.user.picture
+        picture: req.oidc.user.picture,
+        source: 'auth0'
       }
     });
-  } else {
-    res.json({ isAuthenticated: false });
   }
+  
+  // If no authentication method succeeded
+  res.json({ isAuthenticated: false });
 });
 
 app.get('/auth/profile', (req, res) => {
-  if (!isAuth0Configured) {
-    return res.status(401).json({ error: 'Auth0 not configured' });
+  // Check for JWT token authentication
+  const token = req.cookies.access_token;
+  
+  if (token) {
+    try {
+      const tokenUser = jwt.verify(token, process.env.JWT_SECRET);
+      return res.json({
+        ...tokenUser,
+        auth_method: 'jwt'
+      });
+    } catch (error) {
+      console.error('Token verification failed:', error);
+    }
   }
   
-  if (req.oidc && req.oidc.isAuthenticated()) {
-    res.json(req.oidc.user);
-  } else {
-    res.status(401).json({ error: 'Not authenticated' });
+  // Check for session authentication
+  if (req.session && req.session.user) {
+    return res.json({
+      ...req.session.user,
+      auth_method: 'session'
+    });
   }
+  
+  // Check for Auth0 authentication
+  if (isAuth0Configured && req.oidc && req.oidc.isAuthenticated()) {
+    return res.json({
+      ...req.oidc.user,
+      auth_method: 'auth0'
+    });
+  }
+  
+  // If no authentication method succeeded
+  res.status(401).json({ error: 'Not authenticated' });
+});
+
+// Authentication status route
+app.get('/auth/status', (req, res) => {
+  // Check for JWT token authentication
+  const token = req.cookies.access_token;
+  let isTokenAuthenticated = false;
+  let tokenUser = null;
+  
+  if (token) {
+    try {
+      tokenUser = jwt.verify(token, process.env.JWT_SECRET);
+      isTokenAuthenticated = true;
+    } catch (error) {
+      console.error('Token verification failed:', error);
+    }
+  }
+  
+  // Check for session authentication
+  const isSessionAuthenticated = req.session && req.session.user;
+  const sessionUser = req.session.user;
+  
+  // Check for Auth0 authentication
+  const isAuth0Authenticated = req.oidc && req.oidc.isAuthenticated();
+  const auth0User = req.oidc && req.oidc.user;
+  
+  const isAuthenticated = isTokenAuthenticated || isSessionAuthenticated || isAuth0Authenticated;
+  const user = tokenUser || sessionUser || auth0User;
+  
+  res.json({
+    isAuthenticated,
+    user: isAuthenticated ? user : null,
+    authMethod: isTokenAuthenticated ? 'jwt' : (isSessionAuthenticated ? 'session' : (isAuth0Authenticated ? 'auth0' : 'none'))
+  });
 });
 
 // SCIM Bearer token authentication middleware
@@ -567,7 +674,37 @@ app.get('/scim/v2/Schemas', authenticateSCIM, (req, res) => {
 });
 
 // Routes
+app.get('/test-auth', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'test-auth.html'));
+});
+
+// Home route
 app.get('/', (req, res) => {
+  // Check for JWT token authentication
+  const token = req.cookies.access_token;
+  let isTokenAuthenticated = false;
+  let tokenUser = null;
+  
+  if (token) {
+    try {
+      tokenUser = jwt.verify(token, process.env.JWT_SECRET);
+      isTokenAuthenticated = true;
+    } catch (error) {
+      console.error('Token verification failed:', error);
+    }
+  }
+  
+  // Check for session authentication
+  const isSessionAuthenticated = req.session && req.session.user;
+  const sessionUser = req.session.user;
+  
+  // Check for Auth0 authentication
+  const isAuth0Authenticated = req.oidc && req.oidc.isAuthenticated();
+  const auth0User = req.oidc && req.oidc.user;
+  
+  const isAuthenticated = isTokenAuthenticated || isSessionAuthenticated || isAuth0Authenticated;
+  const user = tokenUser || sessionUser || auth0User;
+  
   // In production, serve the static HTML file directly instead of using EJS
   if (process.env.NODE_ENV === 'production') {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
