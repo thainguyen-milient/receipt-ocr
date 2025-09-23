@@ -25,36 +25,61 @@ router.get('/login', (req, res) => {
 
 // Logout route
 router.get('/logout', (req, res) => {
-  // Cookie options for clearing in production
-  const cookieOptions = {
+  // Cookie options for main domain
+  const domainOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    domain: process.env.NODE_ENV === 'production' ? '.receipt-flow.io.vn' : undefined,
+    secure: true,
+    sameSite: 'none',
+    domain: 'receipt-flow.io.vn',
     path: '/'
   };
 
-  const clientCookieOptions = {
+  const domainClientOptions = {
     httpOnly: false,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    domain: process.env.NODE_ENV === 'production' ? '.receipt-flow.io.vn' : undefined,
+    secure: true,
+    sameSite: 'none',
+    domain: 'receipt-flow.io.vn',
     path: '/'
   };
   
-  // Clear all possible token cookies
-  res.clearCookie('access_token', cookieOptions);
-  res.clearCookie('receipt_token', cookieOptions);
-  res.clearCookie('receipt_token_client', clientCookieOptions);
-  res.clearCookie('sso_token', cookieOptions);
-  res.clearCookie('id_token', cookieOptions);
-  res.clearCookie('windsurf_token', cookieOptions);
+  // Cookie options for SSO subdomain
+  const ssoOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none',
+    domain: 'sso.receipt-flow.io.vn',
+    path: '/'
+  };
+
+  const ssoClientOptions = {
+    httpOnly: false,
+    secure: true,
+    sameSite: 'none',
+    domain: 'sso.receipt-flow.io.vn',
+    path: '/'
+  };
+  
+  // Clear cookies on main domain
+  res.clearCookie('access_token', domainOptions);
+  res.clearCookie('receipt_token', domainOptions);
+  res.clearCookie('receipt_token_client', domainClientOptions);
+  res.clearCookie('sso_token', domainOptions);
+  res.clearCookie('sso_token_client', domainClientOptions);
+  res.clearCookie('id_token', domainOptions);
+  res.clearCookie('windsurf_token', domainOptions);
+  
+  // Clear cookies on SSO subdomain
+  res.clearCookie('access_token', ssoOptions);
+  res.clearCookie('sso_token', ssoOptions);
+  res.clearCookie('sso_token_client', ssoClientOptions);
+  res.clearCookie('id_token', ssoOptions);
   
   // Also try clearing without domain for local cookies
   res.clearCookie('access_token');
   res.clearCookie('receipt_token');
   res.clearCookie('receipt_token_client');
   res.clearCookie('sso_token');
+  res.clearCookie('sso_token_client');
   res.clearCookie('id_token');
   res.clearCookie('windsurf_token');
   
@@ -111,12 +136,12 @@ router.get('/sso-callback', (req, res) => {
     
     const receiptToken = generateToken(receiptTokenPayload);
     
-    // Set token as HTTP-only cookie with cross-domain support
+    // Set token as HTTP-only cookie specifically for this domain
     res.cookie('access_token', receiptToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Use 'none' in production for cross-domain
-      domain: process.env.NODE_ENV === 'production' ? '.receipt-flow.io.vn' : undefined, // Use domain in production
+      secure: true, // Always use secure for production domains
+      sameSite: 'none', // Required for cross-domain cookies
+      domain: 'receipt-flow.io.vn', // Main domain without leading dot
       path: '/',
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     });
@@ -124,11 +149,31 @@ router.get('/sso-callback', (req, res) => {
     // Also set a non-httpOnly cookie for client-side access
     res.cookie('receipt_token_client', receiptToken, {
       httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      domain: process.env.NODE_ENV === 'production' ? '.receipt-flow.io.vn' : undefined,
+      secure: true, // Always use secure for production domains
+      sameSite: 'none', // Required for cross-domain cookies
+      domain: 'receipt-flow.io.vn', // Main domain without leading dot
       path: '/',
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
+    
+    // Also set specific receipt tokens
+    res.cookie('receipt_token', receiptToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      domain: 'receipt-flow.io.vn',
+      path: '/',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+    
+    // Set shared SSO token for cross-domain access
+    res.cookie('sso_token_client', receiptToken, {
+      httpOnly: false,
+      secure: true,
+      sameSite: 'none',
+      domain: 'receipt-flow.io.vn',
+      path: '/',
+      maxAge: 24 * 60 * 60 * 1000
     });
     
     // Store user info in session
