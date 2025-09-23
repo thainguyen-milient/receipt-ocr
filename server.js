@@ -221,10 +221,13 @@ function findUserByEmail(email) {
   return usersData.users.find(user => user.emails && user.emails.some(e => e.value === email));
 }
 
+// Import auth middleware
+const { extractToken } = require('./utils/authMiddleware');
+
 // Authentication routes
 app.get('/auth/user', (req, res) => {
-  // Check for JWT token authentication
-  const token = req.cookies.access_token;
+  // Use the improved token extraction (Bearer token priority)
+  const token = extractToken(req);
   let isTokenAuthenticated = false;
   let tokenUser = null;
   
@@ -239,7 +242,7 @@ app.get('/auth/user', (req, res) => {
           name: tokenUser.name,
           email: tokenUser.email,
           picture: tokenUser.picture,
-          source: 'jwt'
+          source: 'bearer_jwt'
         }
       });
     } catch (error) {

@@ -6,17 +6,17 @@ const jwt = require('jsonwebtoken');
 const extractToken = (req) => {
   let token = null;
 
-  // Check Authorization header
+  // Priority 1: Check Authorization header (Bearer token) - preferred method
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
     token = req.headers.authorization.substring(7);
   }
-  // Check query parameter
+  // Priority 2: Check query parameter (for SSO redirects)
   else if (req.query && req.query.token) {
     token = req.query.token;
   }
-  // Check cookies - try multiple possible cookie names
+  // Priority 3: Check cookies (fallback for legacy support)
   else if (req.cookies) {
-    // Try access_token (our app's cookie)
+    // Try access_token (from SSO Gateway)
     if (req.cookies.access_token) {
       token = req.cookies.access_token;
     }
