@@ -45,10 +45,21 @@ function clearToken() {
   ];
   
   try {
+    // Check if we're in production based on hostname
+    const hostname = window.location.hostname;
+    const isProduction = hostname.includes('vercel.app') || hostname.includes('receipt-flow.io.vn');
+    
     cookiesToClear.forEach(cookieName => {
+      // Clear with basic settings
       document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-      // Also try with domain attribute
+      
+      // Clear with domain attribute for current hostname
       document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+      
+      // For production, also try clearing with the root domain
+      if (isProduction) {
+        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.receipt-flow.io.vn; secure; samesite=none;`;
+      }
     });
   } catch (e) {
     console.error('Error clearing cookies:', e);
@@ -118,7 +129,13 @@ function getSsoGatewayUrl() {
     return metaTag.content;
   }
   
-  // Default fallback
+  // Check if we're in production based on hostname
+  const hostname = window.location.hostname;
+  if (hostname.includes('vercel.app') || hostname.includes('receipt-flow.io.vn')) {
+    return 'https://sso.receipt-flow.io.vn';
+  }
+  
+  // Default fallback for local development
   return 'http://localhost:3000';
 }
 
