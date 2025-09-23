@@ -11,12 +11,12 @@ router.use(cookieParser());
 router.get('/login', (req, res) => {
   // Always redirect to SSO Gateway for login
   const returnTo = req.query.returnTo || process.env.BASE_URL || 'http://localhost:3001';
-  return res.redirect(`${process.env.SSO_GATEWAY_URL}/auth/login?productId=windsurf&returnTo=${encodeURIComponent(returnTo)}`);
+  return res.redirect(`${process.env.SSO_GATEWAY_URL}/auth/login?productId=receipt&returnTo=${encodeURIComponent(returnTo)}`);
 });
 
 // Logout route
 router.get('/logout', (req, res) => {
-  // Clear Windsurf JWT token cookie
+  // Clear Receipt JWT token cookie
   res.clearCookie('access_token');
   
   // Clear session
@@ -44,8 +44,8 @@ router.get('/sso-callback', (req, res) => {
     // Verify the token from SSO Gateway
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Generate a Windsurf-specific token
-    const windsurfTokenPayload = {
+    // Generate a receipt-specific token
+    const receiptTokenPayload = {
       sub: payload.sub,
       email: payload.email,
       name: payload.name,
@@ -55,10 +55,10 @@ router.get('/sso-callback', (req, res) => {
       source: 'sso-gateway'
     };
     
-    const windsurfToken = generateToken(windsurfTokenPayload);
+    const receiptToken = generateToken(receiptTokenPayload);
     
     // Set token as HTTP-only cookie
-    res.cookie('access_token', windsurfToken, {
+    res.cookie('access_token', receiptToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -177,7 +177,7 @@ router.post('/token', (req, res) => {
       picture: sessionUser.picture,
       roles: sessionUser.roles || [],
       permissions: sessionUser.permissions || [],
-      source: 'windsurf-direct'
+      source: 'receipt-direct'
     };
     
     const accessToken = generateToken(tokenPayload);
