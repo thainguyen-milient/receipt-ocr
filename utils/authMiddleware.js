@@ -14,9 +14,16 @@ const extractToken = (req) => {
   else if (req.query && req.query.token) {
     token = req.query.token;
   }
-  // Check cookies
-  else if (req.cookies && req.cookies.access_token) {
-    token = req.cookies.access_token;
+  // Check cookies - try multiple possible cookie names
+  else if (req.cookies) {
+    // Try access_token (our app's cookie)
+    if (req.cookies.access_token) {
+      token = req.cookies.access_token;
+    }
+    // Try other possible cookie names from SSO Gateway
+    else if (req.cookies.sso_token) {
+      token = req.cookies.sso_token;
+    }
   }
 
   return token;

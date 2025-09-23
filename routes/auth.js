@@ -57,11 +57,11 @@ router.get('/sso-callback', (req, res) => {
     
     const receiptToken = generateToken(receiptTokenPayload);
     
-    // Set token as HTTP-only cookie
+    // Set token as HTTP-only cookie with cross-domain support
     res.cookie('access_token', receiptToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Use 'none' in production for cross-domain
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     });
     
@@ -76,8 +76,16 @@ router.get('/sso-callback', (req, res) => {
       loginTime: new Date().toISOString()
     };
     
-    // Redirect to dashboard or home page
-    res.redirect('/');
+    // Determine if we should use client-side token storage as fallback
+    const useClientStorage = req.query.clientStorage === 'true' || process.env.NODE_ENV === 'production';
+    
+    if (useClientStorage) {
+      // Redirect with token in URL for client-side storage (will be handled by auth-helper.js)
+      return res.redirect(`/?token=${receiptToken}`);
+    } else {
+      // Standard redirect to dashboard or home page
+      return res.redirect('/');
+    }
   } catch (error) {
     console.error('SSO callback error:', error);
     res.status(401).send(`<html>
