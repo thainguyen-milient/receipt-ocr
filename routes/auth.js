@@ -16,16 +16,30 @@ router.get('/login', (req, res) => {
 
 // Logout route
 router.get('/logout', (req, res) => {
-  // Clear Receipt JWT token cookie
+  // Clear all possible token cookies
   res.clearCookie('access_token');
+  res.clearCookie('receipt_token');
+  res.clearCookie('receipt_token_client');
+  res.clearCookie('sso_token');
+  res.clearCookie('id_token');
   
   // Clear session
   if (req.session) {
     req.session.destroy();
   }
   
-  // Redirect to SSO Gateway logout
-  const returnTo = 'http://localhost:3000';
+  // Check if this is a global logout
+  const isGlobalLogout = req.query.global === 'true';
+  const returnTo = req.query.returnTo || process.env.BASE_URL || 'http://localhost:3001';
+  
+  console.log(`Logout initiated (${isGlobalLogout ? 'global' : 'local'})`);
+  
+  // For global logout, redirect to SSO Gateway with global=true parameter
+  if (isGlobalLogout) {
+    return res.redirect(`${process.env.SSO_GATEWAY_URL}/auth/logout?global=true&returnTo=${encodeURIComponent(returnTo)}`);
+  }
+  
+  // For regular logout, just redirect to SSO Gateway
   return res.redirect(`${process.env.SSO_GATEWAY_URL}/auth/logout?returnTo=${encodeURIComponent(returnTo)}`);
 });
 
