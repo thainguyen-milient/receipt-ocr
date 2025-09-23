@@ -25,20 +25,37 @@ router.get('/login', (req, res) => {
 
 // Logout route
 router.get('/logout', (req, res) => {
-  // Cookie options for main domain
-  const domainOptions = {
+  // Cookie options for receipt subdomain
+  const receiptOptions = {
     httpOnly: true,
     secure: true,
     sameSite: 'none',
-    domain: 'receipt-flow.io.vn',
+    domain: 'receipt.receipt-flow.io.vn', // Updated to match new subdomain
     path: '/'
   };
 
-  const domainClientOptions = {
+  const receiptClientOptions = {
     httpOnly: false,
     secure: true,
     sameSite: 'none',
-    domain: 'receipt-flow.io.vn',
+    domain: 'receipt.receipt-flow.io.vn', // Updated to match new subdomain
+    path: '/'
+  };
+  
+  // Cookie options for main domain with leading dot
+  const mainDomainOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none',
+    domain: '.receipt-flow.io.vn', // Leading dot for subdomain sharing
+    path: '/'
+  };
+
+  const mainDomainClientOptions = {
+    httpOnly: false,
+    secure: true,
+    sameSite: 'none',
+    domain: '.receipt-flow.io.vn', // Leading dot for subdomain sharing
     path: '/'
   };
   
@@ -59,14 +76,24 @@ router.get('/logout', (req, res) => {
     path: '/'
   };
   
-  // Clear cookies on main domain
-  res.clearCookie('access_token', domainOptions);
-  res.clearCookie('receipt_token', domainOptions);
-  res.clearCookie('receipt_token_client', domainClientOptions);
-  res.clearCookie('sso_token', domainOptions);
-  res.clearCookie('sso_token_client', domainClientOptions);
-  res.clearCookie('id_token', domainOptions);
-  res.clearCookie('windsurf_token', domainOptions);
+  // Clear cookies on receipt subdomain
+  res.clearCookie('access_token', receiptOptions);
+  res.clearCookie('receipt_token', receiptOptions);
+  res.clearCookie('receipt_token_client', receiptClientOptions);
+  res.clearCookie('sso_token', receiptOptions);
+  res.clearCookie('sso_token_client', receiptClientOptions);
+  res.clearCookie('id_token', receiptOptions);
+  res.clearCookie('windsurf_token', receiptOptions);
+  
+  // Clear cookies on main domain with leading dot
+  res.clearCookie('access_token', mainDomainOptions);
+  res.clearCookie('access_token_shared', mainDomainOptions);
+  res.clearCookie('receipt_token', mainDomainOptions);
+  res.clearCookie('receipt_token_client', mainDomainClientOptions);
+  res.clearCookie('sso_token', mainDomainOptions);
+  res.clearCookie('sso_token_client', mainDomainClientOptions);
+  res.clearCookie('id_token', mainDomainOptions);
+  res.clearCookie('windsurf_token', mainDomainOptions);
   
   // Clear cookies on SSO subdomain
   res.clearCookie('access_token', ssoOptions);
@@ -141,7 +168,7 @@ router.get('/sso-callback', (req, res) => {
       httpOnly: true,
       secure: true, // Always use secure for production domains
       sameSite: 'none', // Required for cross-domain cookies
-      domain: 'receipt-flow.io.vn', // Main domain without leading dot
+      domain: 'receipt.receipt-flow.io.vn', // Updated to match new subdomain
       path: '/',
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     });
@@ -151,7 +178,7 @@ router.get('/sso-callback', (req, res) => {
       httpOnly: false,
       secure: true, // Always use secure for production domains
       sameSite: 'none', // Required for cross-domain cookies
-      domain: 'receipt-flow.io.vn', // Main domain without leading dot
+      domain: 'receipt.receipt-flow.io.vn', // Updated to match new subdomain
       path: '/',
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     });
@@ -161,17 +188,27 @@ router.get('/sso-callback', (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
-      domain: 'receipt-flow.io.vn',
+      domain: 'receipt.receipt-flow.io.vn', // Updated to match new subdomain
       path: '/',
       maxAge: 24 * 60 * 60 * 1000
     });
     
-    // Set shared SSO token for cross-domain access
+    // Set shared SSO token for cross-domain access with leading dot
     res.cookie('sso_token_client', receiptToken, {
       httpOnly: false,
       secure: true,
       sameSite: 'none',
-      domain: 'receipt-flow.io.vn',
+      domain: '.receipt-flow.io.vn', // Main domain with leading dot for subdomain sharing
+      path: '/',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+    
+    // Set shared access token with leading dot
+    res.cookie('access_token_shared', receiptToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      domain: '.receipt-flow.io.vn', // Main domain with leading dot for subdomain sharing
       path: '/',
       maxAge: 24 * 60 * 60 * 1000
     });
