@@ -129,23 +129,52 @@ const isAuth0Configured = process.env.AUTH0_SECRET &&
                           process.env.AUTH0_CLIENT_ID !== 'your-auth0-client-id-here' &&
                           process.env.AUTH0_ISSUER_BASE_URL !== 'https://your-domain.auth0.com';
 
+// CORS configuration for cross-domain authentication
+const corsOptions = {
+  origin: function (origin, callback) {
+    const defaultOrigins = process.env.NODE_ENV === 'production' 
+      ? ['https://sso.receipt-flow.io.vn', 'https://pluriell.receipt-flow.io.vn', 'https://receipt.receipt-flow.io.vn']
+      : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'];
+    
+    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || defaultOrigins;
+    
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked request from origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(express.static('public'));
 app.set('view engine', 'ejs');
 
 // Session middleware (required for Auth0 and SSO)
-app.use(session({
+const sessionConfig = {
   secret: process.env.SESSION_SECRET || process.env.AUTH0_SECRET || 'fallback-secret-key',
   resave: false,
   saveUninitialized: true,
   cookie: { 
-    secure: process.env.NODE_ENV === 'production', // Set to true in production with HTTPS
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
-}));
+};
+
+// In production, set domain for cross-subdomain session sharing
+if (process.env.NODE_ENV === 'production') {
+  sessionConfig.cookie.domain = '.receipt-flow.io.vn';
+}
+
+app.use(session(sessionConfig));
 
 // Auth0 middleware (only if properly configured and SSO Gateway is not configured)
 if (isAuth0Configured && !process.env.SSO_GATEWAY_URL) {
