@@ -52,6 +52,24 @@ class SessionAuthHelper {
      */
     async syncSessionFromSSO() {
         try {
+            // First try to get token from session
+            const tokenResponse = await fetch(`${this.ssoGatewayUrl}/auth/token-from-session`, {
+                credentials: 'include',
+                headers: {
+                    'Accept': 'application/json',
+                }
+            });
+            
+            if (tokenResponse.ok) {
+                const tokenData = await tokenResponse.json();
+                if (tokenData.success && tokenData.accessToken) {
+                    this.setSessionData(tokenData);
+                    console.log('Access token and session synced successfully from SSO Gateway');
+                    return tokenData;
+                }
+            }
+            
+            // Fallback to regular session endpoint
             const response = await fetch(`${this.ssoGatewayUrl}/auth/session`, {
                 credentials: 'include',
                 headers: {
