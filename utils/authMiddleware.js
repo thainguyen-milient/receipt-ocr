@@ -6,12 +6,13 @@ const jwt = require('jsonwebtoken');
 const extractToken = (req) => {
   let token = null;
 
-  // Check Authorization header
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
-    token = req.headers.authorization.substring(7);
-  }
+  // // Check Authorization header
+  // if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+  //   token = req.headers.authorization.substring(7);
+  // }
   // Check query parameter
-  else if (req.query && req.query.token) {
+  // else
+     if (req.query && req.query.token) {
     token = req.query.token;
   }
   // Check cookies - try multiple possible cookie names
@@ -35,7 +36,7 @@ const extractToken = (req) => {
 const verifyToken = (req, res, next) => {
   try {
     const token = extractToken(req);
-    
+    console.log('Extracted token:', token);
     if (!token) {
       return res.status(401).json({
         success: false,

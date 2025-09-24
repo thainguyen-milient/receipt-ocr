@@ -10,7 +10,7 @@ router.use(cookieParser());
 // Login route - redirect to SSO Gateway
 router.get('/login', (req, res) => {
   // Always redirect to SSO Gateway for login
-  const returnTo = req.query.returnTo || process.env.BASE_URL || 'http://localhost:3001';
+  const returnTo = process.env.BASE_URL || 'http://localhost:3001';
   return res.redirect(`${process.env.SSO_GATEWAY_URL}/auth/login?productId=receipt&returnTo=${encodeURIComponent(returnTo)}`);
 });
 
@@ -25,7 +25,7 @@ router.get('/logout', (req, res) => {
   }
   
   // Redirect to SSO Gateway logout
-  const returnTo = 'http://localhost:3000';
+  const returnTo = process.env.BASE_URL || 'http://localhost:3001';
   return res.redirect(`${process.env.SSO_GATEWAY_URL}/auth/logout?returnTo=${encodeURIComponent(returnTo)}`);
 });
 
